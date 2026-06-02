@@ -1,0 +1,40 @@
+name: Lint and Build
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install idnits
+        run: npm install -g @ietf-tools/idnits
+
+      - name: Build
+        run: make all
+
+      - name: Lint
+        run: make lint
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-artifacts
+          path: |
+            draft-martin-retry-over-ipv6-00.xml
+            draft-martin-retry-over-ipv6-00.txt
+            draft-martin-retry-over-ipv6-00.html
