@@ -116,13 +116,13 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    8.  Server and Operational Considerations . . . . . . . . . . . .  13
      8.1.  When to Send 566  . . . . . . . . . . . . . . . . . . . .  13
-     8.2.  Measuring Outage Impact . . . . . . . . . . . . . . . . .  13
+     8.2.  Measuring Outage Impact . . . . . . . . . . . . . . . . .  14
      8.3.  CDN and Reverse Proxy Deployment  . . . . . . . . . . . .  14
      8.4.  Token Generation  . . . . . . . . . . . . . . . . . . . .  14
      8.5.  Transitional Fallback . . . . . . . . . . . . . . . . . .  14
-   9.  Application Protocol Considerations . . . . . . . . . . . . .  14
+   9.  Application Protocol Considerations . . . . . . . . . . . . .  15
    10. Deployment Models . . . . . . . . . . . . . . . . . . . . . .  15
-   11. Security Considerations . . . . . . . . . . . . . . . . . . .  15
+   11. Security Considerations . . . . . . . . . . . . . . . . . . .  16
    12. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  16
      12.1.  HTTP Status Code . . . . . . . . . . . . . . . . . . . .  16
      12.2.  HTTP Field Names . . . . . . . . . . . . . . . . . . . .  16
@@ -304,7 +304,8 @@ Internet-Draft               retry-over-ipv6                   June 2026
    This status code applies when the responding entity received the
    request over IPv4.  It MUST NOT be used to indicate general server
    overload or maintenance that affects all address families (503
-   Service Unavailable is appropriate for that case).
+   Service Unavailable is appropriate for that case).  It is generally
+   inappropriate on the IPv4 loopback interface (see Section 8.1).
 
    Intermediaries and caches MUST NOT transform a 566 response into a
    successful response.  Caching of 566 is governed by normal HTTP cache
@@ -327,7 +328,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    the numeric value beyond its 5xx class.
 
 3.2.  Example
-
 
 
 
@@ -709,17 +709,17 @@ Internet-Draft               retry-over-ipv6                   June 2026
       available; and
    *  The request was received over IPv4 on the client-facing path.
 
+   The responding entity MAY omit 566 (and the transitional 503 with
+   Retry-Over-IPv6) for requests received on the IPv4 loopback interface
+   — for example, when the client-facing connection uses addresses in
+   127.0.0.0/8 such as 127.0.0.1.  Routable IPv4 service may be disabled
+   during a planned outage while loopback remains available for local
+   health checks, monitoring, and administration; those clients do not
+   need a signal to retry over IPv6.
+
    Operators MAY run staged rollouts: short canary outages (for example,
    one minute), longer windows (hours or a full day aligned with 6/6),
    and eventually permanent IPv6-only service.
-
-8.2.  Measuring Outage Impact
-
-   Operators SHOULD instrument at the edge or load balancer, aggregating
-   all backends:
-
-
-
 
 
 
@@ -729,6 +729,11 @@ Martin                   Expires 3 December 2026               [Page 13]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
+
+8.2.  Measuring Outage Impact
+
+   Operators SHOULD instrument at the edge or load balancer, aggregating
+   all backends:
 
     +===================+============================================+
     | Metric            | Source                                     |
@@ -770,6 +775,17 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Retry-Over-IPv6: ?1 and IPv4-Unavailable-Until until 566 support is
    available.
 
+
+
+
+
+
+
+Martin                   Expires 3 December 2026               [Page 14]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
 9.  Application Protocol Considerations
 
    This section is informative.
@@ -778,13 +794,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    implementations SHOULD inspect Retry-Over-IPv6 on the HTTP response
    before aggregating multi-address connection errors, so that an IPv4
    policy signal is not confused with IPv6 connectivity failure.
-
-
-
-Martin                   Expires 3 December 2026               [Page 14]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
 
    Suggested error text for logs: "IPv4 unavailable until <date>; retry
    over IPv6."
@@ -821,6 +830,18 @@ Internet-Draft               retry-over-ipv6                   June 2026
    HTTP-layer signaling complements DNS and network changes, especially
    when A records remain or when the client already connected over IPv4.
 
+
+
+
+
+
+
+
+Martin                   Expires 3 December 2026               [Page 15]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
 11.  Security Considerations
 
    An attacker who can inject or modify HTTP responses could attempt to
@@ -833,14 +854,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    unavailable, or subject to different policy than the original IPv4
    path.  Operators SHOULD monitor IPv6 reachability before signaling
    clients to retry over IPv6.
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 15]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
 
    Recovery headers and tokens are operational telemetry, not
    authentication.  Deployments SHOULD rate-limit and treat forged
@@ -877,19 +890,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    In the "Hypertext Transfer Protocol (HTTP) Field Name Registry"
    (https://www.iana.org/assignments/http-fields/
    (https://www.iana.org/assignments/http-fields/)):
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

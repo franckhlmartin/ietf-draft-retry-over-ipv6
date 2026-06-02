@@ -162,7 +162,8 @@ available.</t>
 <t>This status code applies when the responding entity received the request over
 IPv4. It MUST NOT be used to indicate general server overload or maintenance
 that affects all address families (<tt>503 Service Unavailable</tt> is appropriate for
-that case).</t>
+that case). It is generally inappropriate on the IPv4 loopback interface (see
+<xref target="when-to-send-566"></xref>).</t>
 <t>Intermediaries and caches MUST NOT transform a <tt>566</tt> response into a successful
 response. Caching of <tt>566</tt> is governed by normal HTTP cache rules
 <xref target="RFC9111"></xref>; operators SHOULD send appropriate <tt>Cache-Control</tt> when responses
@@ -483,6 +484,12 @@ operators SHOULD not assume all &quot;IPv4&quot; clients can switch address fami
 <li>IPv6 service for the requested resource is expected to be available; and</li>
 <li>The request was received over IPv4 on the client-facing path.</li>
 </ul>
+<t>The responding entity MAY omit <tt>566</tt> (and the transitional <tt>503</tt> with
+<tt>Retry-Over-IPv6</tt>) for requests received on the IPv4 loopback interface — for
+example, when the client-facing connection uses addresses in <tt>127.0.0.0/8</tt>
+such as <tt>127.0.0.1</tt>. Routable IPv4 service may be disabled during a planned
+outage while loopback remains available for local health checks, monitoring, and
+administration; those clients do not need a signal to retry over IPv6.</t>
 <t>Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service.</t>

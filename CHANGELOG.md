@@ -3,6 +3,12 @@
 Significant content changes to `draft-martin-retry-over-ipv6.md` are recorded here.
 Formatting-only edits are omitted unless they affect published semantics.
 
+## Unreleased
+
+- Server guidance: operators **MAY** omit `566` on the IPv4 loopback interface
+  (`127.0.0.0/8`), since loopback often stays up during planned routable IPv4
+  outages (health checks, local admin).
+
 ## [draft-martin-retry-over-ipv6-00] — 2026-06-06
 
 Initial Internet-Draft: **HTTP Signaling of Planned IPv4 Unavailability**.

@@ -1699,7 +1699,8 @@ available.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <p id="section-3-2">This status code applies when the responding entity received the request over
 IPv4. It MUST NOT be used to indicate general server overload or maintenance
 that affects all address families (<code>503 Service Unavailable</code> is appropriate for
-that case).<a href="#section-3-2" class="pilcrow">¶</a></p>
+that case). It is generally inappropriate on the IPv4 loopback interface (see
+<a href="#when-to-send-566" class="auto internal xref">Section 8.1</a>).<a href="#section-3-2" class="pilcrow">¶</a></p>
 <p id="section-3-3">Intermediaries and caches MUST NOT transform a <code>566</code> response into a successful
 response. Caching of <code>566</code> is governed by normal HTTP cache rules
 <span>[<a href="#RFC9111" class="cite xref">RFC9111</a>]</span>; operators SHOULD send appropriate <code>Cache-Control</code> when responses
@@ -2169,9 +2170,15 @@ operators SHOULD not assume all "IPv4" clients can switch address families.<a hr
           <li class="compact" id="section-8.1-2.3">The request was received over IPv4 on the client-facing path.<a href="#section-8.1-2.3" class="pilcrow">¶</a>
 </li>
         </ul>
-<p id="section-8.1-3">Operators MAY run staged rollouts: short canary outages (for example, one
+<p id="section-8.1-3">The responding entity MAY omit <code>566</code> (and the transitional <code>503</code> with
+<code>Retry-Over-IPv6</code>) for requests received on the IPv4 loopback interface — for
+example, when the client-facing connection uses addresses in <code>127.0.0.0/8</code>
+such as <code>127.0.0.1</code>. Routable IPv4 service may be disabled during a planned
+outage while loopback remains available for local health checks, monitoring, and
+administration; those clients do not need a signal to retry over IPv6.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+<p id="section-8.1-4">Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
-permanent IPv6-only service.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+permanent IPv6-only service.<a href="#section-8.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="measuring-outage-impact">
