@@ -5,6 +5,11 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Build:** `scripts/fix-mmark-xml.py` removes mmark's invalid outer
+  `References` wrapper; title-block `date` moved above `[seriesInfo]` (TOML
+  scoping).
+- **Abstract:** no normative references (idnits); legacy-client wording unchanged
+  in meaning.
 - **Introduction (§1.1):** IETF 71 (March 2008) meeting-network IPv4 outage as
   early precedent for planned IPv4 drills ([@?IETF71-IPV4-OUTAGE]).
 - **Scope (§1.2):** HTTP-first focus (enterprise APIs, microservices); other

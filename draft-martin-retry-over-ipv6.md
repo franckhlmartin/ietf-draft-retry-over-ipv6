@@ -6,13 +6,13 @@ area = "art"
 workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 
+date = 2026-06-06
+
 [seriesInfo]
 name = "Internet-Draft"
 value = "draft-martin-retry-over-ipv6-00"
 stream = "IETF"
 status = "standard"
-
-date = 2026-06-06T00:00:00Z
 
 [[author]]
 initials = "F."
@@ -34,9 +34,9 @@ aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
 logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy
-clients receive a conventional server error as specified in [@!RFC9110] and MAY
-use the response body for human-readable guidance.
+drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+`566` status code as an internal server error and MAY use the response body for
+human-readable guidance.
 
 {mainmatter}
 
@@ -898,7 +898,7 @@ An edge log pipeline joins both events on `token=abc123`.
 
 <reference anchor="KONEC-IPV4-CZ" target="https://konecipv4.cz/en/">
   <front>
-    <title>Konec IPv4 — Czech Republic IPv4 End Date</title>
+    <title>Konec IPv4 - Czech Republic IPv4 End Date</title>
     <author>
       <organization>CZ.NIC</organization>
     </author>

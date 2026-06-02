@@ -22,8 +22,10 @@ $(XML2RFC):
 	$(PYTHON) -m venv $(VENV)
 	$(VENV)/bin/pip install --upgrade pip xml2rfc
 
-$(DRAFT).xml: $(SOURCE) $(MMARK)
-	$(MMARK) $< > $@
+$(DRAFT).xml: $(SOURCE) $(MMARK) scripts/fix-mmark-xml.py
+	$(MMARK) $< > $@.tmp
+	$(PYTHON) scripts/fix-mmark-xml.py $@.tmp
+	mv $@.tmp $@
 
 $(DRAFT).txt: $(DRAFT).xml $(XML2RFC)
 	$(XML2RFC) $< --text -o $@

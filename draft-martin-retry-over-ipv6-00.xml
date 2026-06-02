@@ -6,7 +6,7 @@
 <title abbrev="retry-over-ipv6">HTTP Signaling of Planned IPv4 Unavailability</title><seriesInfo value="draft-martin-retry-over-ipv6-00" stream="IETF" status="standard" name="Internet-Draft"></seriesInfo>
 <author initials="F." surname="Martin" fullname="Franck Martin"><organization>Peachymango.org</organization><address><postal><street></street>
 </postal><email>franck@peachymango.org</email>
-</address></author><date/>
+</address></author><date year="2026" month="June" day="6"></date>
 <area>art</area>
 <workgroup>HTTP Working Group</workgroup>
 <keyword>IPv6</keyword>
@@ -26,9 +26,9 @@ aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
 logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy
-clients receive a conventional server error as specified in <xref target="RFC9110"></xref> and MAY
-use the response body for human-readable guidance.</t>
+drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+<tt>566</tt> status code as an internal server error and MAY use the response body for
+human-readable guidance.</t>
 </abstract>
 
 </front>
@@ -909,7 +909,6 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 </middle>
 
 <back>
-<references><name>References</name>
 <references><name>Normative References</name>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
@@ -932,7 +931,7 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 </reference>
 <reference anchor="KONEC-IPV4-CZ" target="https://konecipv4.cz/en/">
   <front>
-    <title>Konec IPv4 — Czech Republic IPv4 End Date</title>
+    <title>Konec IPv4 - Czech Republic IPv4 End Date</title>
     <author>
       <organization>CZ.NIC</organization>
     </author>
@@ -956,7 +955,6 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
     </author>
   </front>
 </reference>
-</references>
 </references>
 
 </back>

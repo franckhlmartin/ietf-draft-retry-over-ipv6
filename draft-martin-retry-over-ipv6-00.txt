@@ -4,8 +4,8 @@
 
 HTTP Working Group                                             F. Martin
 Internet-Draft                                           Peachymango.org
-Intended status: Standards Track                             2 June 2026
-Expires: 4 December 2026
+Intended status: Standards Track                             6 June 2026
+Expires: 8 December 2026
 
 
              HTTP Signaling of Planned IPv4 Unavailability
@@ -25,8 +25,9 @@ Abstract
    hard failures in centralized logs.  The mechanism supports
    coordinated events (for example, 6/6 IPv6 Day drills), staged
    enterprise rollouts, and permanent IPv6-only migration.  Legacy
-   clients receive a conventional server error as specified in [RFC9110]
-   and MAY use the response body for human-readable guidance.
+   clients that do not implement this specification treat an
+   unrecognized 566 status code as an internal server error and MAY use
+   the response body for human-readable guidance.
 
 Status of This Memo
 
@@ -43,7 +44,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 December 2026.
+   This Internet-Draft will expire on 8 December 2026.
 
 Copyright Notice
 
@@ -52,8 +53,7 @@ Copyright Notice
 
 
 
-
-Martin                   Expires 4 December 2026                [Page 1]
+Martin                   Expires 8 December 2026                [Page 1]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -109,7 +109,7 @@ Table of Contents
 
 
 
-Martin                   Expires 4 December 2026                [Page 2]
+Martin                   Expires 8 December 2026                [Page 2]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -134,9 +134,8 @@ Internet-Draft               retry-over-ipv6                   June 2026
      13.1.  Dual-Stack Browser . . . . . . . . . . . . . . . . . . .  21
      13.2.  Legacy Browser with HTML Body  . . . . . . . . . . . . .  21
      13.3.  Cross-Backend Recovery . . . . . . . . . . . . . . . . .  22
-   14. References  . . . . . . . . . . . . . . . . . . . . . . . . .  22
-     14.1.  Normative References . . . . . . . . . . . . . . . . . .  22
-     14.2.  Informative References . . . . . . . . . . . . . . . . .  23
+   14. Normative References  . . . . . . . . . . . . . . . . . . . .  22
+   15. Informative References  . . . . . . . . . . . . . . . . . . .  23
    Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  24
 
 1.  Introduction
@@ -165,7 +164,8 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 3]
+
+Martin                   Expires 8 December 2026                [Page 3]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -221,7 +221,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 4]
+Martin                   Expires 8 December 2026                [Page 4]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -277,7 +277,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 5]
+Martin                   Expires 8 December 2026                [Page 5]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -333,7 +333,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 6]
+Martin                   Expires 8 December 2026                [Page 6]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -389,7 +389,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 7]
+Martin                   Expires 8 December 2026                [Page 7]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -445,7 +445,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 8]
+Martin                   Expires 8 December 2026                [Page 8]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -501,7 +501,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026                [Page 9]
+Martin                   Expires 8 December 2026                [Page 9]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -557,7 +557,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 10]
+Martin                   Expires 8 December 2026               [Page 10]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -613,7 +613,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 11]
+Martin                   Expires 8 December 2026               [Page 11]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -669,7 +669,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 12]
+Martin                   Expires 8 December 2026               [Page 12]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -725,7 +725,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 13]
+Martin                   Expires 8 December 2026               [Page 13]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -781,7 +781,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 14]
+Martin                   Expires 8 December 2026               [Page 14]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -837,7 +837,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 15]
+Martin                   Expires 8 December 2026               [Page 15]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -893,7 +893,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 16]
+Martin                   Expires 8 December 2026               [Page 16]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -949,7 +949,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 17]
+Martin                   Expires 8 December 2026               [Page 17]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -1005,7 +1005,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 18]
+Martin                   Expires 8 December 2026               [Page 18]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -1061,7 +1061,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 19]
+Martin                   Expires 8 December 2026               [Page 19]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -1117,7 +1117,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 20]
+Martin                   Expires 8 December 2026               [Page 20]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -1173,7 +1173,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-Martin                   Expires 4 December 2026               [Page 21]
+Martin                   Expires 8 December 2026               [Page 21]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -1210,9 +1210,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    An edge log pipeline joins both events on token=abc123.
 
-14.  References
-
-14.1.  Normative References
+14.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -1223,21 +1221,18 @@ Internet-Draft               retry-over-ipv6                   June 2026
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
-
-
-
-
-
-
-Martin                   Expires 4 December 2026               [Page 22]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    [RFC8305]  Schinazi, D. and T. Pauly, "Happy Eyeballs Version 2:
               Better Connectivity Using Concurrency", RFC 8305,
               DOI 10.17487/RFC8305, December 2017,
               <https://www.rfc-editor.org/info/rfc8305>.
+
+
+
+
+Martin                   Expires 8 December 2026               [Page 22]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    [RFC9110]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
               Ed., "HTTP Semantics", STD 97, RFC 9110,
@@ -1259,7 +1254,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
               HTTP", RFC 9651, DOI 10.17487/RFC9651, September 2024,
               <https://www.rfc-editor.org/info/rfc9651>.
 
-14.2.  Informative References
+15.  Informative References
 
    [IETF71-IPV4-OUTAGE]
               Internet Society, "IETF 71 IPv4 Outage", 2008,
@@ -1267,7 +1262,7 @@ Internet-Draft               retry-over-ipv6                   June 2026
               wiki.tools.isoc.org/IETF71_IPv4_Outage>.
 
    [KONEC-IPV4-CZ]
-              CZ.NIC, "Konec IPv4 — Czech Republic IPv4 End Date",
+              CZ.NIC, "Konec IPv4 - Czech Republic IPv4 End Date",
               <https://konecipv4.cz/en/>.
 
    [RFC9111]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
@@ -1283,16 +1278,17 @@ Internet-Draft               retry-over-ipv6                   June 2026
               Internet Society, "World IPv6 Launch FAQ",
               <https://www.worldipv6launch.org/faq/>.
 
-
-
-Martin                   Expires 4 December 2026               [Page 23]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    [WORLD-IPV6-LAUNCH]
               Internet Society, "World IPv6 Launch",
               <https://www.worldipv6launch.org/>.
+
+
+
+
+Martin                   Expires 8 December 2026               [Page 23]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
 Author's Address
 
@@ -1341,4 +1337,8 @@ Author's Address
 
 
 
-Martin                   Expires 4 December 2026               [Page 24]
+
+
+
+
+Martin                   Expires 8 December 2026               [Page 24]

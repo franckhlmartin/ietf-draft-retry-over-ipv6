@@ -16,9 +16,9 @@ aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
 logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy
-clients receive a conventional server error as specified in   and MAY
-use the response body for human-readable guidance. 
+drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+ 566  status code as an internal server error and MAY use the response body for
+human-readable guidance. 
     " name="description">
 <meta content="xml2rfc 3.33.0" name="generator">
 <meta content="IPv6" name="keyword">
@@ -1235,7 +1235,7 @@ li > p:last-of-type:only-child {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Martin</td>
-<td class="center">Expires 4 December 2026</td>
+<td class="center">Expires 8 December 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1248,12 +1248,12 @@ li > p:last-of-type:only-child {
 <dd class="internet-draft">draft-martin-retry-over-ipv6-00</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-06-02" class="published">2 June 2026</time>
+<time datetime="2026-06-06" class="published">6 June 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-12-04">4 December 2026</time></dd>
+<dd class="expires"><time datetime="2026-12-08">8 December 2026</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1275,9 +1275,9 @@ aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
 logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy
-clients receive a conventional server error as specified in <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span> and MAY
-use the response body for human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+<code>566</code> status code as an internal server error and MAY use the response body for
+human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1298,7 +1298,7 @@ use the response body for human-readable guidance.<a href="#section-abstract-1" 
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 4 December 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 8 December 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1525,18 +1525,13 @@ use the response body for human-readable guidance.<a href="#section-abstract-1" 
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-references" class="internal xref">References</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.1">
-                <p id="section-toc.1-1.14.2.1.1"><a href="#section-14.1" class="auto internal xref">14.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.2">
-                <p id="section-toc.1-1.14.2.2.1"><a href="#section-14.2" class="auto internal xref">14.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
-            <p id="section-toc.1-1.15.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -2696,79 +2691,74 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 </section>
 </div>
 <section id="section-14">
-      <h2 id="name-references">
-<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-references" class="section-name selfRef">References</a>
+      <h2 id="name-normative-references">
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
       </h2>
-<section id="section-14.1">
-        <h3 id="name-normative-references">
-<a href="#section-14.1" class="section-number selfRef">14.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
-        </h3>
 <dl class="references">
 <dt id="RFC2119">[RFC2119]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8305">[RFC8305]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Schinazi, D.</span> and <span class="refAuthor">T. Pauly</span>, <span class="refTitle">"Happy Eyeballs Version 2: Better Connectivity Using Concurrency"</span>, <span class="seriesInfo">RFC 8305</span>, <span class="seriesInfo">DOI 10.17487/RFC8305</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8305">https://www.rfc-editor.org/info/rfc8305</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9110">[RFC9110]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Semantics"</span>, <span class="seriesInfo">STD 97</span>, <span class="seriesInfo">RFC 9110</span>, <span class="seriesInfo">DOI 10.17487/RFC9110</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9110">https://www.rfc-editor.org/info/rfc9110</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9112">[RFC9112]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP/1.1"</span>, <span class="seriesInfo">STD 99</span>, <span class="seriesInfo">RFC 9112</span>, <span class="seriesInfo">DOI 10.17487/RFC9112</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9112">https://www.rfc-editor.org/info/rfc9112</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9113">[RFC9113]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Thomson, M., Ed.</span> and <span class="refAuthor">C. Benfield, Ed.</span>, <span class="refTitle">"HTTP/2"</span>, <span class="seriesInfo">RFC 9113</span>, <span class="seriesInfo">DOI 10.17487/RFC9113</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9113">https://www.rfc-editor.org/info/rfc9113</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9114">[RFC9114]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Bishop, M., Ed.</span>, <span class="refTitle">"HTTP/3"</span>, <span class="seriesInfo">RFC 9114</span>, <span class="seriesInfo">DOI 10.17487/RFC9114</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9114">https://www.rfc-editor.org/info/rfc9114</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9651">[RFC9651]</dt>
-      <dd>
+    <dd>
 <span class="refAuthor">Nottingham, M.</span> and <span class="refAuthor">P. Kamp</span>, <span class="refTitle">"Structured Field Values for HTTP"</span>, <span class="seriesInfo">RFC 9651</span>, <span class="seriesInfo">DOI 10.17487/RFC9651</span>, <time datetime="2024-09" class="refDate">September 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9651">https://www.rfc-editor.org/info/rfc9651</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
-<section id="section-14.2">
-        <h3 id="name-informative-references">
-<a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
-        </h3>
+<section id="section-15">
+      <h2 id="name-informative-references">
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+      </h2>
 <dl class="references">
 <dt id="IETF71-IPV4-OUTAGE">[IETF71-IPV4-OUTAGE]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Internet Society</span>, <span class="refTitle">"IETF 71 IPv4 Outage"</span>, <time datetime="2008" class="refDate">2008</time>, <span>&lt;<a href="https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage">https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="KONEC-IPV4-CZ">[KONEC-IPV4-CZ]</dt>
-        <dd>
-<span class="refAuthor">CZ.NIC</span>, <span class="refTitle">"Konec IPv4 — Czech Republic IPv4 End Date"</span>, <span>&lt;<a href="https://konecipv4.cz/en/">https://konecipv4.cz/en/</a>&gt;</span>. </dd>
+      <dd>
+<span class="refAuthor">CZ.NIC</span>, <span class="refTitle">"Konec IPv4 - Czech Republic IPv4 End Date"</span>, <span>&lt;<a href="https://konecipv4.cz/en/">https://konecipv4.cz/en/</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9111">[RFC9111]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Caching"</span>, <span class="seriesInfo">STD 98</span>, <span class="seriesInfo">RFC 9111</span>, <span class="seriesInfo">DOI 10.17487/RFC9111</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9111">https://www.rfc-editor.org/info/rfc9111</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9457">[RFC9457]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Nottingham, M.</span>, <span class="refAuthor">Wilde, E.</span>, and <span class="refAuthor">S. Dalal</span>, <span class="refTitle">"Problem Details for HTTP APIs"</span>, <span class="seriesInfo">RFC 9457</span>, <span class="seriesInfo">DOI 10.17487/RFC9457</span>, <time datetime="2023-07" class="refDate">July 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9457">https://www.rfc-editor.org/info/rfc9457</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="WORLD-IPV6-DAY">[WORLD-IPV6-DAY]</dt>
-        <dd>
+      <dd>
 <span class="refAuthor">Internet Society</span>, <span class="refTitle">"World IPv6 Launch FAQ"</span>, <span>&lt;<a href="https://www.worldipv6launch.org/faq/">https://www.worldipv6launch.org/faq/</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="WORLD-IPV6-LAUNCH">[WORLD-IPV6-LAUNCH]</dt>
-      <dd>
+    <dd>
 <span class="refAuthor">Internet Society</span>, <span class="refTitle">"World IPv6 Launch"</span>, <span>&lt;<a href="https://www.worldipv6launch.org/">https://www.worldipv6launch.org/</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
-</section>
 </section>
 <div id="authors-addresses">
 <section id="appendix-A">
