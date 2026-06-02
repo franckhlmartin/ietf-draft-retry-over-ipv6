@@ -51,6 +51,12 @@ application layer.</t>
 deliberately making IPv4 service unavailable for minutes, hours, or days to
 expose software, protocol, and operational gaps before irreversible
 decommissioning.</t>
+<t>Governments are also publishing fixed IPv4 end dates. For example, the Czech
+Republic approved a plan for state administration services to stop providing
+IPv4 on <strong>6 June 2032</strong> (6/6/2032) <xref target="KONEC-IPV4-CZ"></xref>. Operators facing such
+deadlines need staged transition mechanisms — including time-bounded planned
+outages, clear user messaging, and measurable HTTP-layer signals — long before
+the final cutover date.</t>
 <t>Network-layer IPv4 removal is a poor fit for staged drills:</t>
 
 <ul spacing="compact">
@@ -851,6 +857,14 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9651.xml"/>
 </references>
 <references><name>Informative References</name>
+<reference anchor="KONEC-IPV4-CZ" target="https://konecipv4.cz/en/">
+  <front>
+    <title>Konec IPv4 — Czech Republic IPv4 End Date</title>
+    <author>
+      <organization>CZ.NIC</organization>
+    </author>
+  </front>
+</reference>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9111.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9457.xml"/>
 <reference anchor="WORLD-IPV6-DAY" target="https://www.worldipv6launch.org/faq/">

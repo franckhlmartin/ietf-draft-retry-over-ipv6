@@ -1554,38 +1554,44 @@ application layer.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 deliberately making IPv4 service unavailable for minutes, hours, or days to
 expose software, protocol, and operational gaps before irreversible
 decommissioning.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
-<p id="section-1.1-3">Network-layer IPv4 removal is a poor fit for staged drills:<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">Governments are also publishing fixed IPv4 end dates. For example, the Czech
+Republic approved a plan for state administration services to stop providing
+IPv4 on <strong>6 June 2032</strong> (6/6/2032) <span>[<a href="#KONEC-IPV4-CZ" class="cite xref">KONEC-IPV4-CZ</a>]</span>. Operators facing such
+deadlines need staged transition mechanisms — including time-bounded planned
+outages, clear user messaging, and measurable HTTP-layer signals — long before
+the final cutover date.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-4">Network-layer IPv4 removal is a poor fit for staged drills:<a href="#section-1.1-4" class="pilcrow">¶</a></p>
 <ul class="compact">
-<li class="compact" id="section-1.1-4.1">Rollback is hard — routing, ACL, and DNS changes propagate slowly and are
-error-prone under pressure.<a href="#section-1.1-4.1" class="pilcrow">¶</a>
+<li class="compact" id="section-1.1-5.1">Rollback is hard — routing, ACL, and DNS changes propagate slowly and are
+error-prone under pressure.<a href="#section-1.1-5.1" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-1.1-4.2">End users lack context — a silent timeout looks like a site outage, not an
-IPv4-path policy.<a href="#section-1.1-4.2" class="pilcrow">¶</a>
+          <li class="compact" id="section-1.1-5.2">End users lack context — a silent timeout looks like a site outage, not an
+IPv4-path policy.<a href="#section-1.1-5.2" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-1.1-4.3">Impact is unmeasured — without an HTTP-visible signal, operators cannot count
+          <li class="compact" id="section-1.1-5.3">Impact is unmeasured — without an HTTP-visible signal, operators cannot count
 affected clients or quantify business loss (even a small percentage of
-requests can be material).<a href="#section-1.1-4.3" class="pilcrow">¶</a>
+requests can be material).<a href="#section-1.1-5.3" class="pilcrow">¶</a>
 </li>
         </ul>
-<p id="section-1.1-5">HTTP-layer IPv4 outages address these gaps:<a href="#section-1.1-5" class="pilcrow">¶</a></p>
+<p id="section-1.1-6">HTTP-layer IPv4 outages address these gaps:<a href="#section-1.1-6" class="pilcrow">¶</a></p>
 <ul class="compact">
-<li class="compact" id="section-1.1-6.1">
+<li class="compact" id="section-1.1-7.1">
             <strong>Easy rollback</strong> — disable the <code>566</code> policy at the load balancer or origin
-without waiting for DNS TTL expiry.<a href="#section-1.1-6.1" class="pilcrow">¶</a>
+without waiting for DNS TTL expiry.<a href="#section-1.1-7.1" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-1.1-6.2">
+          <li class="compact" id="section-1.1-7.2">
             <strong>Advance communication</strong> — site banners, email, and status pages can
-reference the same window as <code>IPv4-Unavailable-Until</code>.<a href="#section-1.1-6.2" class="pilcrow">¶</a>
+reference the same window as <code>IPv4-Unavailable-Until</code>.<a href="#section-1.1-7.2" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-1.1-6.3">
+          <li class="compact" id="section-1.1-7.3">
             <strong>Clear user messaging</strong> — a response body explains that IPv4 is
 intentionally unavailable, when service may resume, and that IPv6 (or
-contacting an ISP or IT department) is the remedy.<a href="#section-1.1-6.3" class="pilcrow">¶</a>
+contacting an ISP or IT department) is the remedy.<a href="#section-1.1-7.3" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-1.1-6.4">
+          <li class="compact" id="section-1.1-7.4">
             <strong>Operator metrics</strong> — count <code>566</code> responses and join them with
 <code>Retry-Over-IPv6-Recovery</code> (and optional tokens) in centralized logs to
-estimate soft versus hard failure rates.<a href="#section-1.1-6.4" class="pilcrow">¶</a>
+estimate soft versus hard failure rates.<a href="#section-1.1-7.4" class="pilcrow">¶</a>
 </li>
         </ul>
 </section>
@@ -2636,6 +2642,10 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 <a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="KONEC-IPV4-CZ">[KONEC-IPV4-CZ]</dt>
+        <dd>
+<span class="refAuthor">CZ.NIC</span>, <span class="refTitle">"Konec IPv4 — Czech Republic IPv4 End Date"</span>, <span>&lt;<a href="https://konecipv4.cz/en/">https://konecipv4.cz/en/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC9111">[RFC9111]</dt>
         <dd>
 <span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Caching"</span>, <span class="seriesInfo">STD 98</span>, <span class="seriesInfo">RFC 9111</span>, <span class="seriesInfo">DOI 10.17487/RFC9111</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9111">https://www.rfc-editor.org/info/rfc9111</a>&gt;</span>. </dd>

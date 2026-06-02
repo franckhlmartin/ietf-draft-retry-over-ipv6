@@ -59,6 +59,13 @@ deliberately making IPv4 service unavailable for minutes, hours, or days to
 expose software, protocol, and operational gaps before irreversible
 decommissioning.
 
+Governments are also publishing fixed IPv4 end dates. For example, the Czech
+Republic approved a plan for state administration services to stop providing
+IPv4 on **6 June 2032** (6/6/2032) [@?KONEC-IPV4-CZ]. Operators facing such
+deadlines need staged transition mechanisms — including time-bounded planned
+outages, clear user messaging, and measurable HTTP-layer signals — long before
+the final cutover date.
+
 Network-layer IPv4 removal is a poor fit for staged drills:
 
 * Rollback is hard — routing, ACL, and DNS changes propagate slowly and are
@@ -814,6 +821,15 @@ An edge log pipeline joins both events on `token=abc123`.
     <title>World IPv6 Launch</title>
     <author>
       <organization>Internet Society</organization>
+    </author>
+  </front>
+</reference>
+
+<reference anchor="KONEC-IPV4-CZ" target="https://konecipv4.cz/en/">
+  <front>
+    <title>Konec IPv4 — Czech Republic IPv4 End Date</title>
+    <author>
+      <organization>CZ.NIC</organization>
     </author>
   </front>
 </reference>

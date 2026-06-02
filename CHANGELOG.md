@@ -5,6 +5,9 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Introduction:** Czech Republic state administration IPv4 end date (6 June
+  2032) and need for staged transition before cutover
+  ([@?KONEC-IPV4-CZ](https://konecipv4.cz/en/)).
 - **Happy Eyeballs (§5.1.5):** RFC 8305 scope (transport vs HTTP); IPv6-first
   vs RTT-driven IPv4 preference; `5xx` not defined as race-wide failure per
   RFC 8305 §9.2.
