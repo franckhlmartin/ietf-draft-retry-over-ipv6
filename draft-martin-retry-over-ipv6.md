@@ -311,8 +311,7 @@ Legacy clients that do not implement this document might still benefit from:
 
 * `Retry-After` with seconds until the outage ends.
 * `Cache-Control: no-store` on dynamically generated outage responses.
-* A response body with plain language, for example: "This service no longer
-  supports IPv4. Please use IPv6. IPv4 service resumes at …"
+* A response body with plain language (see (#response-body)).
 
 Aware clients MUST prefer `566`, `Retry-Over-IPv6`, and `IPv4-Unavailable-Until`
 over inferring outage semantics from the body alone.
@@ -391,27 +390,55 @@ Without tokens, operators MAY compare aggregate `566` counts with aggregate
 recovery counts over an outage window; this yields ratio estimates only, not
 per-session pairing.
 
-### Interaction with Happy Eyeballs
+### Interaction with Happy Eyeballs {#interaction-with-happy-eyeballs}
 
 Implementations using the connection establishment algorithm in [@!RFC8305]
-MAY attempt IPv4 and IPv6 connections in parallel, with the IPv4 attempt often
-delayed relative to IPv6.
+MAY attempt IPv4 and IPv6 connections in parallel, with staggered starts.
+That specification assumes a destination-address preference that favors IPv6
+(Section 2 of [@!RFC8305]): for example, a **Resolution Delay** before acting
+on an early `A` response so an `AAAA` response can arrive, and interleaving of
+address families when connection attempts begin. Implementations MAY adapt those
+delays when local policy differs, and Section 4 of [@!RFC8305] permits
+address sorting that reflects measured round-trip times or prior use — in
+practice, some stacks therefore make a **best effort to prefer IPv6**, while
+others under some network conditions will **attempt IPv4 earlier or more
+often** than a strict IPv6-first policy would suggest.
 
-Implications:
+Happy Eyeballs defines **connection-establishment** success, not
+application-layer HTTP success. Section 5 of [@!RFC8305] treats a connection attempt as
+successful when the transport handshake completes (generally TCP), then
+**SHOULD cancel** other in-flight connection attempts that have not yet
+succeeded. Section 9 of [@!RFC8305] states that Happy Eyeballs handles failures
+at the TCP/IP layer only; Section 9.2 explicitly notes that the application
+(for example, TLS or **HTTP**) may not be operational on every resolved address.
+**RFC 8305 does not specify that an HTTP `5xx` response on one connection
+counts as failure for all parallel connection attempts.** A `566` (or `503`
+with `Retry-Over-IPv6: ?1`) is an HTTP response on an already-established
+connection; handling it — including whether to retry over the other address
+family — is **outside** the Happy Eyeballs connection-race algorithm and is
+left to the HTTP client or application.
 
-* If IPv6 succeeds first, the client MAY cancel the IPv4 attempt before `566`
-  is received. No `Retry-Over-IPv6-Recovery` is sent. `566` counts may
+Implications for this document:
+
+* If IPv6 completes the transport handshake and delivers a successful HTTP
+  response first, the client MAY cancel the IPv4 attempt before `566` is
+  received. No `Retry-Over-IPv6-Recovery` is sent. `566` counts may
   under-represent total exposure — this is often the desired outcome during an
   outage.
 * The client MUST send `Retry-Over-IPv6-Recovery` only if it fully received
   `566` (or `503` with `Retry-Over-IPv6: ?1`) on an IPv4 connection for this
   logical request attempt.
-* If IPv6 already succeeded for this logical request attempt via Happy
-  Eyeballs, the client MUST NOT treat a late or abandoned IPv4 `566` as
-  requiring another IPv6 retry or recovery signal.
+* If IPv6 already succeeded for this logical request attempt at the HTTP
+  layer, the client MUST NOT treat a late or abandoned IPv4 `566` as requiring
+  another IPv6 retry or recovery signal — regardless of how Happy Eyeballs
+  raced the underlying connections.
+* An aware client that receives `566` only on IPv4 and has not yet succeeded
+  over IPv6 MUST apply the IPv6 retry requirements in (#ipv6-retry); that
+  behavior is an HTTP-layer extension beyond [@!RFC8305].
 
 Operators interpreting `566` and recovery metrics during planned outages SHOULD
-account for Happy Eyeballs race behavior.
+account for Happy Eyeballs transport racing and for the fact that HTTP status
+codes are not part of the RFC 8305 success definition.
 
 ### Example
 
@@ -422,10 +449,41 @@ Retry-Over-IPv6-Recovery: recovered; token="a1b2c3d4e5f6"
 
 ~~~
 
-# Response Body
+# Response Body {#response-body}
 
 Responses with `566` SHOULD include a body explaining the planned IPv4 outage
 for legacy clients and human readers.
+
+Operators SHOULD make the body as clear as possible for non-technical readers.
+The body SHOULD NOT assume that the reader understands IPv4, IPv6, or the
+difference between them. The body SHOULD NOT assume that the reader can resolve
+the problem themselves (for example, by changing browser or device settings).
+The body SHOULD briefly explain, in plain language, that the Internet is
+transitioning to a newer protocol generation (IPv6) and that this service may
+not be reachable over the older generation (IPv4) on the reader's network path.
+The body SHOULD give the reader concrete information they can pass to their
+Internet service provider (ISP) or organization IT department — for example,
+that the site may require IPv6 but their system or network does not appear to
+support it — and SHOULD ask them to investigate why IPv6 is not working. When
+`IPv4-Unavailable-Until` is present, the body SHOULD state when service over
+the older connection may resume in plain language.
+
+The following plain-text example is suitable for `Content-Type: text/plain` or
+as the text content of an HTML page as `Content-Type: text/html`:
+
+> This site is not available on your current Internet connection.
+>
+> The Internet is moving to a newer protocol generation called IPv6. This
+> service is not reachable over the older generation (IPv4) on your network.
+> You probably cannot fix this yourself.
+>
+> Contact your Internet provider or your organization's IT help desk and say:
+> "I cannot reach this site — it may require IPv6, but my system does not seem
+> to work with IPv6." Ask them why IPv6 is not working for you and whether
+> they can enable it.
+>
+> If this is a planned outage, service over the older connection may resume
+> after 7 June 2026, 00:00 UTC.
 
 For machine-readable errors, deployments MAY use Problem Details
 [@?RFC9457], for example:
@@ -441,7 +499,10 @@ For machine-readable errors, deployments MAY use Problem Details
 }
 ~~~
 
-For browsers, `Content-Type: text/html` with equivalent text is sufficient.
+The `detail` field in Problem Details is primarily for developers and aware
+clients; deployments SHOULD still provide a separate human-oriented body (plain
+text or HTML) with the guidance above when the response may be shown to end
+users.
 
 # Client Requirements {#client-requirements}
 
@@ -452,17 +513,29 @@ When a client receives `566` (or `503` with `Retry-Over-IPv6: ?1`):
 1. If the client knows the response arrived on an IPv4 connection, it SHOULD
    proceed with an IPv6 retry as below.
 2. If the address family is unknown, it MAY retry over IPv6 once.
-3. If Happy Eyeballs [@!RFC8305] already delivered a successful response for
-   this logical request attempt over IPv6, it MUST NOT perform another retry or
-   send `Retry-Over-IPv6-Recovery` based on a late IPv4 response.
+3. If a successful **HTTP** response for this logical request attempt was
+   already delivered over IPv6 (including when Happy Eyeballs [@!RFC8305] raced
+   the underlying connections; see (#interaction-with-happy-eyeballs)), the
+   client MUST NOT perform another retry or send `Retry-Over-IPv6-Recovery`
+   based on a late IPv4 response.
 
-## IPv6 Retry
+## IPv6 Retry {#ipv6-retry}
 
 The client SHOULD close or abandon the IPv4 connection before retrying over IPv6,
 consistent with the lifecycle described in (#retry-over-ipv6-recovery). The
 retry MUST use the same method, target URI, and authority. The client SHOULD force address-family selection to IPv6 for this
 retry. The client MUST NOT change the host, scheme, or port solely because of
 `566` or `Retry-Over-IPv6`.
+
+## Idempotent Methods {#client-idempotent-methods}
+
+Aware clients that receive `566` (or transitional `503` with
+`Retry-Over-IPv6: ?1`) SHOULD retry the same method, target URI, and body over
+IPv6 (see (#ipv6-retry)). For safe methods [@!RFC9110], such a retry is
+generally acceptable. For non-idempotent methods such as `POST`, the same retry
+can cause duplicate processing — for example, a duplicate payment, order, or
+database insert. Responding entities and operators SHOULD follow the guidance in
+(#idempotent-methods) on when not to send `566` for such requests.
 
 ## Loop Prevention
 
@@ -489,14 +562,6 @@ On the first successful IPv6 request following a fully received `566` over IPv4,
 the client SHOULD send `Retry-Over-IPv6-Recovery: recovered` and SHOULD echo
 `Retry-Over-IPv6-Token` in the `token` parameter when a token was provided.
 
-## Idempotent Methods
-
-For safe methods [@!RFC9110], automatic retry is generally acceptable. For
-non-idempotent methods such as `POST`, clients SHOULD retry only when the
-application can tolerate duplicate processing. Operators SHOULD prefer applying
-`566` to idempotent methods during outage tests, or document application-level
-deduplication for APIs that require non-idempotent methods.
-
 ## NAT64 and Translation
 
 Clients on translated IPv4 paths (for example NAT64/464XLAT) might not be able
@@ -512,7 +577,9 @@ The responding entity SHOULD send `566` when:
 
 * IPv4 HTTP service for the authority is intentionally unavailable;
 * IPv6 service for the requested resource is expected to be available; and
-* The request was received over IPv4 on the client-facing path.
+* The request was received over IPv4 on the client-facing path; and
+* For non-idempotent methods, duplicate processing of an IPv6 retry is
+  acceptable or prevented (see (#idempotent-methods)).
 
 The responding entity MAY omit `566` (and the transitional `503` with
 `Retry-Over-IPv6`) for requests received on the IPv4 loopback interface — for
@@ -524,6 +591,40 @@ administration; those clients do not need a signal to retry over IPv6.
 Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service.
+
+## Idempotent Methods and Duplicate Processing {#idempotent-methods}
+
+As described in (#client-idempotent-methods), aware clients SHOULD retry after
+`566`, including for non-idempotent methods — which can cause duplicate
+processing. Clients cannot generally determine whether a given application or
+resource tolerates duplicate processing. Responding entities MUST NOT assume that
+end-user clients will suppress IPv6 retries for non-idempotent methods.
+
+A `566` response does **not** guarantee that the first request had no effect.
+Duplicate risk arises when:
+
+* **`566` is generated at an edge or load balancer** while an origin server
+  already started or completed processing the request on the IPv4 path.
+* **Policy races during rollout** — IPv4-unavailability policy may be enabled or
+  disabled while requests are in flight.
+* **Late IPv4 responses versus an IPv6 retry** — when Happy Eyeballs
+  [@!RFC8305] or a prior IPv6 attempt is in play, a client may retry or complete
+  work without deduplication at the application layer (see
+  (#interaction-with-happy-eyeballs)).
+
+Because of this uncertainty, the responding entity **SHOULD NOT** send `566`
+(or `503` with `Retry-Over-IPv6: ?1`) for non-idempotent methods such as
+`POST` when an IPv6 retry of the same request would cause unacceptable duplicate
+side effects, unless the application provides deduplication (for example, an
+idempotency key), a request identifier, or another mechanism that makes the
+retry safe. Where duplicate processing is unacceptable and no such mechanism
+exists, **omitting `566` MAY be preferable** to signaling a retry the client
+cannot safely evaluate.
+
+Operators SHOULD prefer applying `566` to idempotent methods during outage
+tests. APIs that must remain available for non-idempotent methods through a
+planned IPv4 outage SHOULD document and implement application-level
+deduplication or other safe-retry semantics explicitly.
 
 ## Measuring Outage Impact
 
@@ -663,10 +764,17 @@ without displaying an error page.
 HTTP/1.1 566 IPv4 Unavailable
 Retry-After: 86400
 Content-Type: text/html; charset=utf-8
-Content-Length: 142
 
-<html><body><p>IPv4 unavailable until 7 June 2026.
-Please use IPv6 or contact IT support.</p></body></html>
+<html><body><p>This site is not available on your current
+Internet connection.</p><p>The Internet is moving to a newer protocol
+generation called IPv6. This service is not reachable over the older
+generation (IPv4) on your network. You probably cannot fix this
+yourself.</p><p>Contact your Internet provider or your organization's
+IT help desk and say: &quot;I cannot reach this site — it may require
+IPv6, but my system does not seem to work with IPv6.&quot; Ask them
+why IPv6 is not working for you and whether they can enable it.</p>
+<p>If this is a planned outage, service over the older connection may
+resume after 7 June 2026, 00:00 UTC.</p></body></html>
 ~~~
 
 ## Cross-Backend Recovery

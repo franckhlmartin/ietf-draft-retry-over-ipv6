@@ -5,6 +5,14 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Happy Eyeballs (§5.1.5):** RFC 8305 scope (transport vs HTTP); IPv6-first
+  vs RTT-driven IPv4 preference; `5xx` not defined as race-wide failure per
+  RFC 8305 §9.2.
+- **Idempotent methods:** brief client retry note restored in §7.3; server and
+  operator guidance remains in §8.2 ({#idempotent-methods}).
+- **Response body (§6):** guidance for non-technical readers (IPv6 transition
+  context, relay text for ISP/IT, no self-service assumptions); standard
+  example plain-text and HTML wording.
 - Server guidance: operators **MAY** omit `566` on the IPv4 loopback interface
   (`127.0.0.0/8`), since loopback often stays up during planned routable IPv4
   outages (health checks, local admin).

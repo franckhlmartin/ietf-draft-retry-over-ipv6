@@ -1440,16 +1440,16 @@ use the response body for human-readable guidance.<a href="#section-abstract-1" 
                 <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-ipv6-retry" class="internal xref">IPv6 Retry</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
-                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-loop-prevention" class="internal xref">Loop Prevention</a></p>
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-idempotent-methods" class="internal xref">Idempotent Methods</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
-                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-ipv4-only-clients" class="internal xref">IPv4-Only Clients</a></p>
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-loop-prevention" class="internal xref">Loop Prevention</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.5">
-                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-recovery-signaling" class="internal xref">Recovery Signaling</a></p>
+                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-ipv4-only-clients" class="internal xref">IPv4-Only Clients</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.6">
-                <p id="section-toc.1-1.7.2.6.1"><a href="#section-7.6" class="auto internal xref">7.6</a>.  <a href="#name-idempotent-methods" class="internal xref">Idempotent Methods</a></p>
+                <p id="section-toc.1-1.7.2.6.1"><a href="#section-7.6" class="auto internal xref">7.6</a>.  <a href="#name-recovery-signaling" class="internal xref">Recovery Signaling</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.7">
                 <p id="section-toc.1-1.7.2.7.1"><a href="#section-7.7" class="auto internal xref">7.7</a>.  <a href="#name-nat64-and-translation" class="internal xref">NAT64 and Translation</a></p>
@@ -1463,16 +1463,19 @@ use the response body for human-readable guidance.<a href="#section-abstract-1" 
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-when-to-send-566" class="internal xref">When to Send 566</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-measuring-outage-impact" class="internal xref">Measuring Outage Impact</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-idempotent-methods-and-dupl" class="internal xref">Idempotent Methods and Duplicate Processing</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-cdn-and-reverse-proxy-deplo" class="internal xref">CDN and Reverse Proxy Deployment</a></p>
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-measuring-outage-impact" class="internal xref">Measuring Outage Impact</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4">
-                <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-token-generation" class="internal xref">Token Generation</a></p>
+                <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-cdn-and-reverse-proxy-deplo" class="internal xref">CDN and Reverse Proxy Deployment</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5">
-                <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-transitional-fallback" class="internal xref">Transitional Fallback</a></p>
+                <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-token-generation" class="internal xref">Token Generation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.6">
+                <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-transitional-fallback" class="internal xref">Transitional Fallback</a></p>
 </li>
             </ul>
 </li>
@@ -1879,8 +1882,7 @@ without session affinity to a particular origin server.<a href="#section-4.3.2-2
           <li class="compact" id="section-4.4-2.2">
             <code>Cache-Control: no-store</code> on dynamically generated outage responses.<a href="#section-4.4-2.2" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-4.4-2.3">A response body with plain language, for example: "This service no longer
-supports IPv4. Please use IPv6. IPv4 service resumes at …"<a href="#section-4.4-2.3" class="pilcrow">¶</a>
+          <li class="compact" id="section-4.4-2.3">A response body with plain language (see <a href="#response-body" class="auto internal xref">Section 6</a>).<a href="#section-4.4-2.3" class="pilcrow">¶</a>
 </li>
         </ul>
 <p id="section-4.4-3">Aware clients MUST prefer <code>566</code>, <code>Retry-Over-IPv6</code>, and <code>IPv4-Unavailable-Until</code>
@@ -1992,26 +1994,54 @@ per-session pairing.<a href="#section-5.1.4-4" class="pilcrow">¶</a></p>
 <a href="#section-5.1.5" class="section-number selfRef">5.1.5. </a><a href="#name-interaction-with-happy-eyeb" class="section-name selfRef">Interaction with Happy Eyeballs</a>
           </h4>
 <p id="section-5.1.5-1">Implementations using the connection establishment algorithm in <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span>
-MAY attempt IPv4 and IPv6 connections in parallel, with the IPv4 attempt often
-delayed relative to IPv6.<a href="#section-5.1.5-1" class="pilcrow">¶</a></p>
-<p id="section-5.1.5-2">Implications:<a href="#section-5.1.5-2" class="pilcrow">¶</a></p>
+MAY attempt IPv4 and IPv6 connections in parallel, with staggered starts.
+That specification assumes a destination-address preference that favors IPv6
+(Section 2 of <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span>): for example, a <strong>Resolution Delay</strong> before acting
+on an early <code>A</code> response so an <code>AAAA</code> response can arrive, and interleaving of
+address families when connection attempts begin. Implementations MAY adapt those
+delays when local policy differs, and Section 4 of <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> permits
+address sorting that reflects measured round-trip times or prior use — in
+practice, some stacks therefore make a <strong>best effort to prefer IPv6</strong>, while
+others under some network conditions will <strong>attempt IPv4 earlier or more
+often</strong> than a strict IPv6-first policy would suggest.<a href="#section-5.1.5-1" class="pilcrow">¶</a></p>
+<p id="section-5.1.5-2">Happy Eyeballs defines <strong>connection-establishment</strong> success, not
+application-layer HTTP success. Section 5 of <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> treats a connection attempt as
+successful when the transport handshake completes (generally TCP), then
+<strong>SHOULD cancel</strong> other in-flight connection attempts that have not yet
+succeeded. Section 9 of <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> states that Happy Eyeballs handles failures
+at the TCP/IP layer only; Section 9.2 explicitly notes that the application
+(for example, TLS or <strong>HTTP</strong>) may not be operational on every resolved address.
+<strong>RFC 8305 does not specify that an HTTP <code>5xx</code> response on one connection
+counts as failure for all parallel connection attempts.</strong> A <code>566</code> (or <code>503</code>
+with <code>Retry-Over-IPv6: ?1</code>) is an HTTP response on an already-established
+connection; handling it — including whether to retry over the other address
+family — is <strong>outside</strong> the Happy Eyeballs connection-race algorithm and is
+left to the HTTP client or application.<a href="#section-5.1.5-2" class="pilcrow">¶</a></p>
+<p id="section-5.1.5-3">Implications for this document:<a href="#section-5.1.5-3" class="pilcrow">¶</a></p>
 <ul class="compact">
-<li class="compact" id="section-5.1.5-3.1">If IPv6 succeeds first, the client MAY cancel the IPv4 attempt before <code>566</code>
-is received. No <code>Retry-Over-IPv6-Recovery</code> is sent. <code>566</code> counts may
+<li class="compact" id="section-5.1.5-4.1">If IPv6 completes the transport handshake and delivers a successful HTTP
+response first, the client MAY cancel the IPv4 attempt before <code>566</code> is
+received. No <code>Retry-Over-IPv6-Recovery</code> is sent. <code>566</code> counts may
 under-represent total exposure — this is often the desired outcome during an
-outage.<a href="#section-5.1.5-3.1" class="pilcrow">¶</a>
+outage.<a href="#section-5.1.5-4.1" class="pilcrow">¶</a>
 </li>
-            <li class="compact" id="section-5.1.5-3.2">The client MUST send <code>Retry-Over-IPv6-Recovery</code> only if it fully received
+            <li class="compact" id="section-5.1.5-4.2">The client MUST send <code>Retry-Over-IPv6-Recovery</code> only if it fully received
 <code>566</code> (or <code>503</code> with <code>Retry-Over-IPv6: ?1</code>) on an IPv4 connection for this
-logical request attempt.<a href="#section-5.1.5-3.2" class="pilcrow">¶</a>
+logical request attempt.<a href="#section-5.1.5-4.2" class="pilcrow">¶</a>
 </li>
-            <li class="compact" id="section-5.1.5-3.3">If IPv6 already succeeded for this logical request attempt via Happy
-Eyeballs, the client MUST NOT treat a late or abandoned IPv4 <code>566</code> as
-requiring another IPv6 retry or recovery signal.<a href="#section-5.1.5-3.3" class="pilcrow">¶</a>
+            <li class="compact" id="section-5.1.5-4.3">If IPv6 already succeeded for this logical request attempt at the HTTP
+layer, the client MUST NOT treat a late or abandoned IPv4 <code>566</code> as requiring
+another IPv6 retry or recovery signal — regardless of how Happy Eyeballs
+raced the underlying connections.<a href="#section-5.1.5-4.3" class="pilcrow">¶</a>
+</li>
+            <li class="compact" id="section-5.1.5-4.4">An aware client that receives <code>566</code> only on IPv4 and has not yet succeeded
+over IPv6 MUST apply the IPv6 retry requirements in <a href="#ipv6-retry" class="auto internal xref">Section 7.2</a>; that
+behavior is an HTTP-layer extension beyond <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span>.<a href="#section-5.1.5-4.4" class="pilcrow">¶</a>
 </li>
           </ul>
-<p id="section-5.1.5-4">Operators interpreting <code>566</code> and recovery metrics during planned outages SHOULD
-account for Happy Eyeballs race behavior.<a href="#section-5.1.5-4" class="pilcrow">¶</a></p>
+<p id="section-5.1.5-5">Operators interpreting <code>566</code> and recovery metrics during planned outages SHOULD
+account for Happy Eyeballs transport racing and for the fact that HTTP status
+codes are not part of the RFC 8305 success definition.<a href="#section-5.1.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-1">
@@ -2039,9 +2069,36 @@ Retry-Over-IPv6-Recovery: recovered; token="a1b2c3d4e5f6"
       </h2>
 <p id="section-6-1">Responses with <code>566</code> SHOULD include a body explaining the planned IPv4 outage
 for legacy clients and human readers.<a href="#section-6-1" class="pilcrow">¶</a></p>
-<p id="section-6-2">For machine-readable errors, deployments MAY use Problem Details
-<span>[<a href="#RFC9457" class="cite xref">RFC9457</a>]</span>, for example:<a href="#section-6-2" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-6-3">
+<p id="section-6-2">Operators SHOULD make the body as clear as possible for non-technical readers.
+The body SHOULD NOT assume that the reader understands IPv4, IPv6, or the
+difference between them. The body SHOULD NOT assume that the reader can resolve
+the problem themselves (for example, by changing browser or device settings).
+The body SHOULD briefly explain, in plain language, that the Internet is
+transitioning to a newer protocol generation (IPv6) and that this service may
+not be reachable over the older generation (IPv4) on the reader's network path.
+The body SHOULD give the reader concrete information they can pass to their
+Internet service provider (ISP) or organization IT department — for example,
+that the site may require IPv6 but their system or network does not appear to
+support it — and SHOULD ask them to investigate why IPv6 is not working. When
+<code>IPv4-Unavailable-Until</code> is present, the body SHOULD state when service over
+the older connection may resume in plain language.<a href="#section-6-2" class="pilcrow">¶</a></p>
+<p id="section-6-3">The following plain-text example is suitable for <code>Content-Type: text/plain</code> or
+as the text content of an HTML page as <code>Content-Type: text/html</code>:<a href="#section-6-3" class="pilcrow">¶</a></p>
+<blockquote id="section-6-4">
+        <p id="section-6-4.1">This site is not available on your current Internet connection.<a href="#section-6-4.1" class="pilcrow">¶</a></p>
+<p id="section-6-4.2">The Internet is moving to a newer protocol generation called IPv6. This
+service is not reachable over the older generation (IPv4) on your network.
+You probably cannot fix this yourself.<a href="#section-6-4.2" class="pilcrow">¶</a></p>
+<p id="section-6-4.3">Contact your Internet provider or your organization's IT help desk and say:
+"I cannot reach this site — it may require IPv6, but my system does not seem
+to work with IPv6." Ask them why IPv6 is not working for you and whether
+they can enable it.<a href="#section-6-4.3" class="pilcrow">¶</a></p>
+<p id="section-6-4.4">If this is a planned outage, service over the older connection may resume
+after 7 June 2026, 00:00 UTC.<a href="#section-6-4.4" class="pilcrow">¶</a></p>
+</blockquote>
+<p id="section-6-5">For machine-readable errors, deployments MAY use Problem Details
+<span>[<a href="#RFC9457" class="cite xref">RFC9457</a>]</span>, for example:<a href="#section-6-5" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6-6">
 <pre>{
   "type": "about:blank",
   "title": "IPv4 Unavailable",
@@ -2050,9 +2107,12 @@ for legacy clients and human readers.<a href="#section-6-1" class="pilcrow">¶</
   "retryOverIPv6": true,
   "ipv4UnavailableUntil": "2026-06-07T00:00:00Z"
 }
-</pre><a href="#section-6-3" class="pilcrow">¶</a>
+</pre><a href="#section-6-6" class="pilcrow">¶</a>
 </div>
-<p id="section-6-4">For browsers, <code>Content-Type: text/html</code> with equivalent text is sufficient.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<p id="section-6-7">The <code>detail</code> field in Problem Details is primarily for developers and aware
+clients; deployments SHOULD still provide a separate human-oriented body (plain
+text or HTML) with the guidance above when the response may be shown to end
+users.<a href="#section-6-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="client-requirements">
@@ -2072,9 +2132,11 @@ proceed with an IPv6 retry as below.<a href="#section-7.1-2.1" class="pilcrow">�
 </li>
           <li id="section-7.1-2.2">If the address family is unknown, it MAY retry over IPv6 once.<a href="#section-7.1-2.2" class="pilcrow">¶</a>
 </li>
-          <li id="section-7.1-2.3">If Happy Eyeballs <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> already delivered a successful response for
-this logical request attempt over IPv6, it MUST NOT perform another retry or
-send <code>Retry-Over-IPv6-Recovery</code> based on a late IPv4 response.<a href="#section-7.1-2.3" class="pilcrow">¶</a>
+          <li id="section-7.1-2.3">If a successful <strong>HTTP</strong> response for this logical request attempt was
+already delivered over IPv6 (including when Happy Eyeballs <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> raced
+the underlying connections; see <a href="#interaction-with-happy-eyeballs" class="auto internal xref">Section 5.1.5</a>), the
+client MUST NOT perform another retry or send <code>Retry-Over-IPv6-Recovery</code>
+based on a late IPv4 response.<a href="#section-7.1-2.3" class="pilcrow">¶</a>
 </li>
         </ol>
 </section>
@@ -2091,51 +2153,53 @@ retry. The client MUST NOT change the host, scheme, or port solely because of
 <code>566</code> or <code>Retry-Over-IPv6</code>.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="loop-prevention">
+<div id="client-idempotent-methods">
 <section id="section-7.3">
-        <h3 id="name-loop-prevention">
-<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-loop-prevention" class="section-name selfRef">Loop Prevention</a>
+        <h3 id="name-idempotent-methods">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-idempotent-methods" class="section-name selfRef">Idempotent Methods</a>
         </h3>
-<p id="section-7.3-1">The client MUST NOT perform more than one IPv4-to-IPv6 retry per logical
-request attempt triggered by <code>566</code> or <code>Retry-Over-IPv6</code>.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
-<p id="section-7.3-2">After receiving <code>566</code>, the client SHOULD prefer IPv6 for subsequent connections
+<p id="section-7.3-1">Aware clients that receive <code>566</code> (or transitional <code>503</code> with
+<code>Retry-Over-IPv6: ?1</code>) SHOULD retry the same method, target URI, and body over
+IPv6 (see <a href="#ipv6-retry" class="auto internal xref">Section 7.2</a>). For safe methods <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>, such a retry is
+generally acceptable. For non-idempotent methods such as <code>POST</code>, the same retry
+can cause duplicate processing — for example, a duplicate payment, order, or
+database insert. Responding entities and operators SHOULD follow the guidance in
+<a href="#idempotent-methods" class="auto internal xref">Section 8.2</a> on when not to send <code>566</code> for such requests.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="loop-prevention">
+<section id="section-7.4">
+        <h3 id="name-loop-prevention">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-loop-prevention" class="section-name selfRef">Loop Prevention</a>
+        </h3>
+<p id="section-7.4-1">The client MUST NOT perform more than one IPv4-to-IPv6 retry per logical
+request attempt triggered by <code>566</code> or <code>Retry-Over-IPv6</code>.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<p id="section-7.4-2">After receiving <code>566</code>, the client SHOULD prefer IPv6 for subsequent connections
 to the authority until <code>IPv4-Unavailable-Until</code> (if present) or for a default
-period (for example, 10 minutes).<a href="#section-7.3-2" class="pilcrow">¶</a></p>
-<p id="section-7.3-3">If the IPv6 retry fails with connectivity errors, the client SHOULD apply
+period (for example, 10 minutes).<a href="#section-7.4-2" class="pilcrow">¶</a></p>
+<p id="section-7.4-3">If the IPv6 retry fails with connectivity errors, the client SHOULD apply
 backoff before further attempts and SHOULD NOT fall back to IPv4 while
-<code>IPv4-Unavailable-Until</code> is in the future.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<code>IPv4-Unavailable-Until</code> is in the future.<a href="#section-7.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ipv4-only-clients">
-<section id="section-7.4">
+<section id="section-7.5">
         <h3 id="name-ipv4-only-clients">
-<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-ipv4-only-clients" class="section-name selfRef">IPv4-Only Clients</a>
+<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-ipv4-only-clients" class="section-name selfRef">IPv4-Only Clients</a>
         </h3>
-<p id="section-7.4-1">Clients without IPv6 connectivity cannot retry over IPv6. They SHOULD surface
+<p id="section-7.5-1">Clients without IPv6 connectivity cannot retry over IPv6. They SHOULD surface
 <code>IPv4-Unavailable-Until</code> (if present) and the response body to the user or
-calling application for logging and support tickets.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+calling application for logging and support tickets.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="recovery-signaling">
-<section id="section-7.5">
-        <h3 id="name-recovery-signaling">
-<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-recovery-signaling" class="section-name selfRef">Recovery Signaling</a>
-        </h3>
-<p id="section-7.5-1">On the first successful IPv6 request following a fully received <code>566</code> over IPv4,
-the client SHOULD send <code>Retry-Over-IPv6-Recovery: recovered</code> and SHOULD echo
-<code>Retry-Over-IPv6-Token</code> in the <code>token</code> parameter when a token was provided.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="idempotent-methods">
 <section id="section-7.6">
-        <h3 id="name-idempotent-methods">
-<a href="#section-7.6" class="section-number selfRef">7.6. </a><a href="#name-idempotent-methods" class="section-name selfRef">Idempotent Methods</a>
+        <h3 id="name-recovery-signaling">
+<a href="#section-7.6" class="section-number selfRef">7.6. </a><a href="#name-recovery-signaling" class="section-name selfRef">Recovery Signaling</a>
         </h3>
-<p id="section-7.6-1">For safe methods <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>, automatic retry is generally acceptable. For
-non-idempotent methods such as <code>POST</code>, clients SHOULD retry only when the
-application can tolerate duplicate processing. Operators SHOULD prefer applying
-<code>566</code> to idempotent methods during outage tests, or document application-level
-deduplication for APIs that require non-idempotent methods.<a href="#section-7.6-1" class="pilcrow">¶</a></p>
+<p id="section-7.6-1">On the first successful IPv6 request following a fully received <code>566</code> over IPv4,
+the client SHOULD send <code>Retry-Over-IPv6-Recovery: recovered</code> and SHOULD echo
+<code>Retry-Over-IPv6-Token</code> in the <code>token</code> parameter when a token was provided.<a href="#section-7.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="nat64-and-translation">
@@ -2167,7 +2231,10 @@ operators SHOULD not assume all "IPv4" clients can switch address families.<a hr
 </li>
           <li class="compact" id="section-8.1-2.2">IPv6 service for the requested resource is expected to be available; and<a href="#section-8.1-2.2" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-8.1-2.3">The request was received over IPv4 on the client-facing path.<a href="#section-8.1-2.3" class="pilcrow">¶</a>
+          <li class="compact" id="section-8.1-2.3">The request was received over IPv4 on the client-facing path; and<a href="#section-8.1-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-8.1-2.4">For non-idempotent methods, duplicate processing of an IPv6 retry is
+acceptable or prevented (see <a href="#idempotent-methods" class="auto internal xref">Section 8.2</a>).<a href="#section-8.1-2.4" class="pilcrow">¶</a>
 </li>
         </ul>
 <p id="section-8.1-3">The responding entity MAY omit <code>566</code> (and the transitional <code>503</code> with
@@ -2181,13 +2248,55 @@ minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service.<a href="#section-8.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="measuring-outage-impact">
+<div id="idempotent-methods">
 <section id="section-8.2">
-        <h3 id="name-measuring-outage-impact">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-measuring-outage-impact" class="section-name selfRef">Measuring Outage Impact</a>
+        <h3 id="name-idempotent-methods-and-dupl">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-idempotent-methods-and-dupl" class="section-name selfRef">Idempotent Methods and Duplicate Processing</a>
         </h3>
-<p id="section-8.2-1">Operators SHOULD instrument at the edge or load balancer, aggregating all
-backends:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-1">As described in <a href="#client-idempotent-methods" class="auto internal xref">Section 7.3</a>, aware clients SHOULD retry after
+<code>566</code>, including for non-idempotent methods — which can cause duplicate
+processing. Clients cannot generally determine whether a given application or
+resource tolerates duplicate processing. Responding entities MUST NOT assume that
+end-user clients will suppress IPv6 retries for non-idempotent methods.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2">A <code>566</code> response does <strong>not</strong> guarantee that the first request had no effect.
+Duplicate risk arises when:<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-8.2-3.1">
+            <strong><code>566</code> is generated at an edge or load balancer</strong> while an origin server
+already started or completed processing the request on the IPv4 path.<a href="#section-8.2-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-8.2-3.2">
+            <strong>Policy races during rollout</strong> — IPv4-unavailability policy may be enabled or
+disabled while requests are in flight.<a href="#section-8.2-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-8.2-3.3">
+            <strong>Late IPv4 responses versus an IPv6 retry</strong> — when Happy Eyeballs
+<span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> or a prior IPv6 attempt is in play, a client may retry or complete
+work without deduplication at the application layer (see
+<a href="#interaction-with-happy-eyeballs" class="auto internal xref">Section 5.1.5</a>).<a href="#section-8.2-3.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-8.2-4">Because of this uncertainty, the responding entity <span class="bcp14">SHOULD NOT</span> send <code>566</code>
+(or <code>503</code> with <code>Retry-Over-IPv6: ?1</code>) for non-idempotent methods such as
+<code>POST</code> when an IPv6 retry of the same request would cause unacceptable duplicate
+side effects, unless the application provides deduplication (for example, an
+idempotency key), a request identifier, or another mechanism that makes the
+retry safe. Where duplicate processing is unacceptable and no such mechanism
+exists, <strong>omitting <code>566</code> MAY be preferable</strong> to signaling a retry the client
+cannot safely evaluate.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+<p id="section-8.2-5">Operators SHOULD prefer applying <code>566</code> to idempotent methods during outage
+tests. APIs that must remain available for non-idempotent methods through a
+planned IPv4 outage SHOULD document and implement application-level
+deduplication or other safe-retry semantics explicitly.<a href="#section-8.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="measuring-outage-impact">
+<section id="section-8.3">
+        <h3 id="name-measuring-outage-impact">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-measuring-outage-impact" class="section-name selfRef">Measuring Outage Impact</a>
+        </h3>
+<p id="section-8.3-1">Operators SHOULD instrument at the edge or load balancer, aggregating all
+backends:<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
           <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
@@ -2218,40 +2327,40 @@ backends:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
             </tr>
           </tbody>
         </table>
-<p id="section-8.2-3">Hard-failure counts are estimates: clients with no IPv6 path cannot send
-recovery signals in-band.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<p id="section-8.2-4">The responding entity SHOULD log recovery headers but MUST NOT alter the
-response based on them.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+<p id="section-8.3-3">Hard-failure counts are estimates: clients with no IPv6 path cannot send
+recovery signals in-band.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+<p id="section-8.3-4">The responding entity SHOULD log recovery headers but MUST NOT alter the
+response based on them.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="cdn-and-reverse-proxy-deployment">
-<section id="section-8.3">
+<section id="section-8.4">
         <h3 id="name-cdn-and-reverse-proxy-deplo">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-cdn-and-reverse-proxy-deplo" class="section-name selfRef">CDN and Reverse Proxy Deployment</a>
+<a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-cdn-and-reverse-proxy-deplo" class="section-name selfRef">CDN and Reverse Proxy Deployment</a>
         </h3>
-<p id="section-8.3-1">When an edge terminates client IPv4 and connects to an origin over IPv6, the
+<p id="section-8.4-1">When an edge terminates client IPv4 and connects to an origin over IPv6, the
 <strong>edge</strong> sends <code>566</code> to the client when IPv4 to the edge is disabled — not
 necessarily the origin application. The entity that generates <code>566</code> MUST know
-the client-facing address family.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+the client-facing address family.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="token-generation">
-<section id="section-8.4">
+<section id="section-8.5">
         <h3 id="name-token-generation">
-<a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-token-generation" class="section-name selfRef">Token Generation</a>
+<a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-token-generation" class="section-name selfRef">Token Generation</a>
         </h3>
-<p id="section-8.4-1">Token format and validation are deployment-specific. Tokens SHOULD be
-unguessable, short-lived, and loggable without affinity to the issuing server.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
+<p id="section-8.5-1">Token format and validation are deployment-specific. Tokens SHOULD be
+unguessable, short-lived, and loggable without affinity to the issuing server.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transitional-fallback">
-<section id="section-8.5">
+<section id="section-8.6">
         <h3 id="name-transitional-fallback">
-<a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-transitional-fallback" class="section-name selfRef">Transitional Fallback</a>
+<a href="#section-8.6" class="section-number selfRef">8.6. </a><a href="#name-transitional-fallback" class="section-name selfRef">Transitional Fallback</a>
         </h3>
-<p id="section-8.5-1">Deployments that cannot emit <code>566</code> MAY use <code>503 Service Unavailable</code> with
+<p id="section-8.6-1">Deployments that cannot emit <code>566</code> MAY use <code>503 Service Unavailable</code> with
 <code>Retry-Over-IPv6: ?1</code> and <code>IPv4-Unavailable-Until</code> until <code>566</code> support is
-available.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
+available.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2449,10 +2558,17 @@ without displaying an error page.<a href="#section-13.1-3" class="pilcrow">¶</a
 <pre>HTTP/1.1 566 IPv4 Unavailable
 Retry-After: 86400
 Content-Type: text/html; charset=utf-8
-Content-Length: 142
 
-&lt;html&gt;&lt;body&gt;&lt;p&gt;IPv4 unavailable until 7 June 2026.
-Please use IPv6 or contact IT support.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+&lt;html&gt;&lt;body&gt;&lt;p&gt;This site is not available on your current
+Internet connection.&lt;/p&gt;&lt;p&gt;The Internet is moving to a newer protocol
+generation called IPv6. This service is not reachable over the older
+generation (IPv4) on your network. You probably cannot fix this
+yourself.&lt;/p&gt;&lt;p&gt;Contact your Internet provider or your organization's
+IT help desk and say: &amp;quot;I cannot reach this site — it may require
+IPv6, but my system does not seem to work with IPv6.&amp;quot; Ask them
+why IPv6 is not working for you and whether they can enable it.&lt;/p&gt;
+&lt;p&gt;If this is a planned outage, service over the older connection may
+resume after 7 June 2026, 00:00 UTC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
 </pre><a href="#section-13.2-1" class="pilcrow">¶</a>
 </div>
 </section>
