@@ -5,6 +5,18 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Introduction (§1.1):** IETF 71 (March 2008) meeting-network IPv4 outage as
+  early precedent for planned IPv4 drills ([@?IETF71-IPV4-OUTAGE]).
+- **Scope (§1.2):** HTTP-first focus (enterprise APIs, microservices); other
+  protocols out of scope; HTTP-version-agnostic signaling (HTTP/1.1, HTTP/2,
+  HTTP/3) with transport-layer IPv4 detection.
+- **Technical motivation (§1.3):** clarify examples as HTTP-carried APIs (REST,
+  gRPC, GraphQL, JSON-RPC).
+- **HTTP versions (informative):** deployment notes for HTTP/1.1, HTTP/2
+  (connection-level `566`), HTTP/3 (QUIC, concurrent connections), and Alt-Svc;
+  gRPC subsection retitled.
+- **Security considerations (§11):** optional operator-validatable tokens (e.g.
+  site identifier + nonce + HMAC) for log filtering; not client authentication.
 - **Introduction:** Czech Republic state administration IPv4 end date (6 June
   2032) and need for staged transition before cutover
   ([@?KONEC-IPV4-CZ](https://konecipv4.cz/en/)).

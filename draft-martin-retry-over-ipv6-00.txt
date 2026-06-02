@@ -4,8 +4,8 @@
 
 HTTP Working Group                                             F. Martin
 Internet-Draft                                           Peachymango.org
-Intended status: Standards Track                             1 June 2026
-Expires: 3 December 2026
+Intended status: Standards Track                             2 June 2026
+Expires: 4 December 2026
 
 
              HTTP Signaling of Planned IPv4 Unavailability
@@ -43,7 +43,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 December 2026.
+   This Internet-Draft will expire on 4 December 2026.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Martin                   Expires 3 December 2026                [Page 1]
+Martin                   Expires 4 December 2026                [Page 1]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
@@ -71,70 +71,73 @@ Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
      1.1.  Why Planned IPv4 Outages  . . . . . . . . . . . . . . . .   3
-     1.2.  Technical Motivation  . . . . . . . . . . . . . . . . . .   4
-     1.3.  Requirements Language . . . . . . . . . . . . . . . . . .   5
-     1.4.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   5
-   2.  Overview  . . . . . . . . . . . . . . . . . . . . . . . . . .   5
-   3.  The 566 IPv4 Unavailable Status Code  . . . . . . . . . . . .   6
+     1.2.  Scope . . . . . . . . . . . . . . . . . . . . . . . . . .   5
+     1.3.  Technical Motivation  . . . . . . . . . . . . . . . . . .   5
+     1.4.  Requirements Language . . . . . . . . . . . . . . . . . .   5
+     1.5.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   6
+   2.  Overview  . . . . . . . . . . . . . . . . . . . . . . . . . .   6
+   3.  The 566 IPv4 Unavailable Status Code  . . . . . . . . . . . .   7
      3.1.  Status Code Selection . . . . . . . . . . . . . . . . . .   7
      3.2.  Example . . . . . . . . . . . . . . . . . . . . . . . . .   7
-   4.  Response Header Fields  . . . . . . . . . . . . . . . . . . .   7
-     4.1.  Retry-Over-IPv6 . . . . . . . . . . . . . . . . . . . . .   7
-       4.1.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   7
-       4.1.2.  Semantics . . . . . . . . . . . . . . . . . . . . . .   7
+   4.  Response Header Fields  . . . . . . . . . . . . . . . . . . .   8
+     4.1.  Retry-Over-IPv6 . . . . . . . . . . . . . . . . . . . . .   8
+       4.1.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   8
+       4.1.2.  Semantics . . . . . . . . . . . . . . . . . . . . . .   8
      4.2.  IPv4-Unavailable-Until  . . . . . . . . . . . . . . . . .   8
        4.2.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   8
-       4.2.2.  Semantics . . . . . . . . . . . . . . . . . . . . . .   8
-     4.3.  Retry-Over-IPv6-Token . . . . . . . . . . . . . . . . . .   8
-       4.3.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   8
+       4.2.2.  Semantics . . . . . . . . . . . . . . . . . . . . . .   9
+     4.3.  Retry-Over-IPv6-Token . . . . . . . . . . . . . . . . . .   9
+       4.3.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   9
        4.3.2.  Semantics . . . . . . . . . . . . . . . . . . . . . .   9
-     4.4.  Legacy Client Compatibility . . . . . . . . . . . . . . .   9
-   5.  Request Header Fields . . . . . . . . . . . . . . . . . . . .   9
-     5.1.  Retry-Over-IPv6-Recovery  . . . . . . . . . . . . . . . .   9
-       5.1.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   9
+     4.4.  Legacy Client Compatibility . . . . . . . . . . . . . . .  10
+   5.  Request Header Fields . . . . . . . . . . . . . . . . . . . .  10
+     5.1.  Retry-Over-IPv6-Recovery  . . . . . . . . . . . . . . . .  10
+       5.1.1.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .  10
        5.1.2.  Semantics . . . . . . . . . . . . . . . . . . . . . .  10
-       5.1.3.  Connection Lifecycle  . . . . . . . . . . . . . . . .  10
-       5.1.4.  Cross-Backend Logging . . . . . . . . . . . . . . . .  10
-       5.1.5.  Interaction with Happy Eyeballs . . . . . . . . . . .  11
-       5.1.6.  Example . . . . . . . . . . . . . . . . . . . . . . .  12
-   6.  Response Body . . . . . . . . . . . . . . . . . . . . . . . .  12
-   7.  Client Requirements . . . . . . . . . . . . . . . . . . . . .  13
-     7.1.  Processing 566  . . . . . . . . . . . . . . . . . . . . .  13
+       5.1.3.  Connection Lifecycle  . . . . . . . . . . . . . . . .  11
+       5.1.4.  Cross-Backend Logging . . . . . . . . . . . . . . . .  11
+       5.1.5.  Interaction with Happy Eyeballs . . . . . . . . . . .  12
+       5.1.6.  Example . . . . . . . . . . . . . . . . . . . . . . .  13
+   6.  Response Body . . . . . . . . . . . . . . . . . . . . . . . .  13
+   7.  Client Requirements . . . . . . . . . . . . . . . . . . . . .  14
+     7.1.  Processing 566  . . . . . . . . . . . . . . . . . . . . .  14
      7.2.  IPv6 Retry  . . . . . . . . . . . . . . . . . . . . . . .  14
-     7.3.  Idempotent Methods  . . . . . . . . . . . . . . . . . . .  14
-     7.4.  Loop Prevention . . . . . . . . . . . . . . . . . . . . .  14
-     7.5.  IPv4-Only Clients . . . . . . . . . . . . . . . . . . . .  14
+     7.3.  Idempotent Methods  . . . . . . . . . . . . . . . . . . .  15
+     7.4.  Loop Prevention . . . . . . . . . . . . . . . . . . . . .  15
+     7.5.  IPv4-Only Clients . . . . . . . . . . . . . . . . . . . .  15
      7.6.  Recovery Signaling  . . . . . . . . . . . . . . . . . . .  15
-     7.7.  NAT64 and Translation . . . . . . . . . . . . . . . . . .  15
 
 
 
-Martin                   Expires 3 December 2026                [Page 2]
+Martin                   Expires 4 December 2026                [Page 2]
 
 Internet-Draft               retry-over-ipv6                   June 2026
 
 
+     7.7.  NAT64 and Translation . . . . . . . . . . . . . . . . . .  15
    8.  Server and Operational Considerations . . . . . . . . . . . .  15
-     8.1.  When to Send 566  . . . . . . . . . . . . . . . . . . . .  15
-     8.2.  Idempotent Methods and Duplicate Processing . . . . . . .  15
-     8.3.  Measuring Outage Impact . . . . . . . . . . . . . . . . .  16
+     8.1.  When to Send 566  . . . . . . . . . . . . . . . . . . . .  16
+     8.2.  Idempotent Methods and Duplicate Processing . . . . . . .  16
+     8.3.  Measuring Outage Impact . . . . . . . . . . . . . . . . .  17
      8.4.  CDN and Reverse Proxy Deployment  . . . . . . . . . . . .  17
-     8.5.  Token Generation  . . . . . . . . . . . . . . . . . . . .  17
-     8.6.  Transitional Fallback . . . . . . . . . . . . . . . . . .  17
-   9.  Application Protocol Considerations . . . . . . . . . . . . .  17
-   10. Deployment Models . . . . . . . . . . . . . . . . . . . . . .  17
-   11. Security Considerations . . . . . . . . . . . . . . . . . . .  18
-   12. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  19
-     12.1.  HTTP Status Code . . . . . . . . . . . . . . . . . . . .  19
-     12.2.  HTTP Field Names . . . . . . . . . . . . . . . . . . . .  19
-   13. Examples  . . . . . . . . . . . . . . . . . . . . . . . . . .  19
-     13.1.  Dual-Stack Browser . . . . . . . . . . . . . . . . . . .  19
-     13.2.  Legacy Browser with HTML Body  . . . . . . . . . . . . .  20
-     13.3.  Cross-Backend Recovery . . . . . . . . . . . . . . . . .  20
-   14. References  . . . . . . . . . . . . . . . . . . . . . . . . .  20
-     14.1.  Normative References . . . . . . . . . . . . . . . . . .  20
-     14.2.  Informative References . . . . . . . . . . . . . . . . .  21
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  21
+     8.5.  Token Generation  . . . . . . . . . . . . . . . . . . . .  18
+     8.6.  Transitional Fallback . . . . . . . . . . . . . . . . . .  18
+   9.  Application Protocol Considerations . . . . . . . . . . . . .  18
+     9.1.  HTTP Versions . . . . . . . . . . . . . . . . . . . . . .  18
+     9.2.  gRPC and Other HTTP APIs  . . . . . . . . . . . . . . . .  19
+   10. Deployment Models . . . . . . . . . . . . . . . . . . . . . .  19
+   11. Security Considerations . . . . . . . . . . . . . . . . . . .  20
+   12. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  20
+     12.1.  HTTP Status Code . . . . . . . . . . . . . . . . . . . .  20
+     12.2.  HTTP Field Names . . . . . . . . . . . . . . . . . . . .  21
+   13. Examples  . . . . . . . . . . . . . . . . . . . . . . . . . .  21
+     13.1.  Dual-Stack Browser . . . . . . . . . . . . . . . . . . .  21
+     13.2.  Legacy Browser with HTML Body  . . . . . . . . . . . . .  21
+     13.3.  Cross-Backend Recovery . . . . . . . . . . . . . . . . .  22
+   14. References  . . . . . . . . . . . . . . . . . . . . . . . . .  22
+     14.1.  Normative References . . . . . . . . . . . . . . . . . .  22
+     14.2.  Informative References . . . . . . . . . . . . . . . . .  23
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  24
 
 1.  Introduction
 
@@ -151,10 +154,32 @@ Internet-Draft               retry-over-ipv6                   June 2026
    what still breaks when IPv4 is intentionally unavailable — remains
    under-specified at the application layer.
 
+
+
+
+
+
+
+
+
+
+
+
+Martin                   Expires 4 December 2026                [Page 3]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
    Operators have adopted time-bounded *planned IPv4 outages* as a
    complement: deliberately making IPv4 service unavailable for minutes,
    hours, or days to expose software, protocol, and operational gaps
-   before irreversible decommissioning.
+   before irreversible decommissioning.  The IETF meeting network ran an
+   early example at IETF 71 (Philadelphia, March 2008): an IPv6-only
+   wireless network was available throughout the week, and IPv4 on the
+   main meeting network was disabled for roughly one hour during the
+   Wednesday plenary on 12 March 2008 so attendees could use IPv6-only
+   Internet access and surface client stacks, applications, and services
+   that still depended on IPv4 [IETF71-IPV4-OUTAGE].
 
    Governments are also publishing fixed IPv4 end dates.  For example,
    the Czech Republic approved a plan for state administration services
@@ -162,13 +187,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Operators facing such deadlines need staged transition mechanisms —
    including time-bounded planned outages, clear user messaging, and
    measurable HTTP-layer signals — long before the final cutover date.
-
-
-
-Martin                   Expires 3 December 2026                [Page 3]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
 
    Network-layer IPv4 removal is a poor fit for staged drills:
 
@@ -193,7 +211,41 @@ Internet-Draft               retry-over-ipv6                   June 2026
       Over-IPv6-Recovery (and optional tokens) in centralized logs to
       estimate soft versus hard failure rates.
 
-1.2.  Technical Motivation
+
+
+
+
+
+
+
+
+
+
+Martin                   Expires 4 December 2026                [Page 4]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
+1.2.  Scope
+
+   HTTP is not the only application protocol on the Internet.  This
+   document addresses HTTP first because it is widely deployed, visible
+   to end users (for example in browsers), and pervasive in enterprise
+   environments for web applications, APIs, and microservices behind
+   load balancers.  Other protocols might adopt analogous techniques for
+   planned IPv4 outages; defining those signals is out of scope for this
+   document.
+
+   This specification is HTTP-version-agnostic: the status code, header
+   fields, and client behavior apply equally to HTTP/1.1 [RFC9112],
+   HTTP/2 [RFC9113], and HTTP/3 [RFC9114], as they are defined in terms
+   of HTTP semantics [RFC9110].  Wire-format examples use HTTP/1.1
+   message syntax for readability.  Implementations MUST determine
+   whether a request was received over IPv4 at the transport layer (TCP
+   for HTTP/1.1 and HTTP/2, QUIC for HTTP/3), not from the HTTP version
+   alone.
+
+1.3.  Technical Motivation
 
    Many operators plan to remove or disable IPv4 while retaining IPv6
    service.  During migration, maintenance, or decommissioning, a client
@@ -207,26 +259,15 @@ Internet-Draft               retry-over-ipv6                   June 2026
    a general outage unless the server explicitly signals that IPv4 is
    intentionally unavailable and IPv6 should be used instead.
 
-   Application-to-application traffic (REST, gRPC over HTTP/2, and
-   similar protocols) benefits from a machine-readable signal distinct
-   from connectivity failures on other addresses.  For example, a gRPC
-   client that tries multiple resolved addresses may surface an error
-   from the first failing attempt, masking the fact that the meaningful
-   signal was returned on an IPv4 connection.
+   Application-to-application traffic carried over HTTP (for example
+   REST-style APIs, gRPC, GraphQL, or JSON-RPC) benefits from a machine-
+   readable signal distinct from connectivity failures on other
+   addresses.  For example, a gRPC client that tries multiple resolved
+   addresses may surface an error from the first failing attempt,
+   masking the fact that the meaningful signal was returned on an IPv4
+   connection.
 
-
-
-
-
-
-
-
-Martin                   Expires 3 December 2026                [Page 4]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
-1.3.  Requirements Language
+1.4.  Requirements Language
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
@@ -234,7 +275,14 @@ Internet-Draft               retry-over-ipv6                   June 2026
    14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-1.4.  Terminology
+
+
+Martin                   Expires 4 December 2026                [Page 5]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
+1.5.  Terminology
 
    This document uses terms from [RFC9110].  Additional terms:
 
@@ -274,14 +322,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
        retry) — optional telemetry so operators can correlate soft
        failures across load-balanced backends.
 
-
-
-
-Martin                   Expires 3 December 2026                [Page 5]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    Implementations that cannot emit 566 (for example, before the status
    code is registered or supported by their HTTP stack) MAY send *503
    Service Unavailable* instead, with *Retry-Over-IPv6: ?1* and the
@@ -289,6 +329,14 @@ Internet-Draft               retry-over-ipv6                   June 2026
    treat 503 with Retry-Over-IPv6: ?1 the same as 566 when deciding to
    retry over IPv6 (see Section 4.1 and Section 7).  Operators SHOULD
    use 566 once their deployment supports it.
+
+
+
+
+Martin                   Expires 4 December 2026                [Page 6]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    The responding entity MUST send 566 (or 503 with Retry-Over-IPv6: ?1
    during transitional deployments) only when the request was received
@@ -325,19 +373,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Section 4.1.  It MAY include IPv4-Unavailable-Until, a response body,
    and Retry-Over-IPv6-Token.
 
-
-
-
-
-
-
-
-
-Martin                   Expires 3 December 2026                [Page 6]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
 3.1.  Status Code Selection
 
    This document registers 566 (IPv4 Unavailable) in the HTTP status
@@ -349,6 +384,15 @@ Internet-Draft               retry-over-ipv6                   June 2026
    the numeric value beyond its 5xx class.
 
 3.2.  Example
+
+
+
+
+
+Martin                   Expires 4 December 2026                [Page 7]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    HTTP/1.1 566 IPv4 Unavailable
    Retry-Over-IPv6: ?1
@@ -385,15 +429,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    an IPv4 connection.  If the client already used IPv6 for that
    attempt, it MUST NOT retry solely because of this header field.
 
-
-
-
-
-Martin                   Expires 3 December 2026                [Page 7]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    The header field conveys intent only.  It does not guarantee that a
    retry over IPv6 will succeed.
 
@@ -406,6 +441,14 @@ Internet-Draft               retry-over-ipv6                   June 2026
    after which IPv4 service for this authority may be restored.
 
 4.2.1.  Syntax
+
+
+
+
+Martin                   Expires 4 December 2026                [Page 8]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    IPv4-Unavailable-Until = "IPv4-Unavailable-Until" OWS ":"
                              OWS HTTP-date
@@ -442,14 +485,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Retry-Over-IPv6-Token = "Retry-Over-IPv6-Token" OWS ":"
                            OWS quoted-string
 
-
-
-
-Martin                   Expires 3 December 2026                [Page 8]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    quoted-string is defined in Section 5.6.4 of [RFC9110].
 
 4.3.2.  Semantics
@@ -462,6 +497,14 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Deployments SHOULD use stateless tokens verifiable or loggable by any
    node in a load-balanced fleet without session affinity to a
    particular origin server.
+
+
+
+
+Martin                   Expires 4 December 2026                [Page 9]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    This header is RECOMMENDED on 566 responses when operators want
    pairwise 566-to-recovery correlation across backends.
@@ -498,14 +541,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    value SHOULD be copied from Retry-Over-IPv6-Token on the prior 566
    response.
 
-
-
-
-Martin                   Expires 3 December 2026                [Page 9]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
 5.1.2.  Semantics
 
    The field value recovered means: the responding entity previously
@@ -519,6 +554,13 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    The client MUST NOT send this header to unrelated origins.  The
    header MUST NOT contain personally identifiable information.
+
+
+
+Martin                   Expires 4 December 2026               [Page 10]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    There is no failure variant defined in this document.  If the IPv6
    connection attempt fails before any HTTP response is received, the
@@ -553,15 +595,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    *  Log 566 events with Retry-Over-IPv6-Token at the edge, load
       balancer, or origin.
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 10]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    *  Log Retry-Over-IPv6-Recovery (and echoed token) at the same
       aggregation tier when possible.
    *  Join events off-box by token across all backend logs.
@@ -572,6 +605,18 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Without tokens, operators MAY compare aggregate 566 counts with
    aggregate recovery counts over an outage window; this yields ratio
    estimates only, not per-session pairing.
+
+
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 11]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
 5.1.5.  Interaction with Happy Eyeballs
 
@@ -606,18 +651,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    Implications for this document:
 
-
-
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 11]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    *  If IPv6 completes the transport handshake and delivers a
       successful HTTP response first, the client MAY cancel the IPv4
       attempt before 566 is received.  No Retry-Over-IPv6-Recovery is
@@ -630,6 +663,17 @@ Internet-Draft               retry-over-ipv6                   June 2026
       HTTP layer, the client MUST NOT treat a late or abandoned IPv4 566
       as requiring another IPv6 retry or recovery signal — regardless of
       how Happy Eyeballs raced the underlying connections.
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 12]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
    *  An aware client that receives 566 only on IPv4 and has not yet
       succeeded over IPv6 MUST apply the IPv6 retry requirements in
       Section 7.2; that behavior is an HTTP-layer extension beyond
@@ -667,13 +711,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Unavailable-Until is present, the body SHOULD state when service over
    the older connection may resume in plain language.
 
-
-
-Martin                   Expires 3 December 2026               [Page 12]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    The following plain-text example is suitable for Content-Type: text/
    plain or as the text content of an HTML page as Content-Type: text/
    html:
@@ -684,6 +721,15 @@ Internet-Draft               retry-over-ipv6                   June 2026
    |  This service is not reachable over the older generation (IPv4) on
    |  your network.  You probably cannot fix this yourself.
    |  
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 13]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
    |  Contact your Internet provider or your organization's IT help desk
    |  and say: "I cannot reach this site — it may require IPv6, but my
    |  system does not seem to work with IPv6."  Ask them why IPv6 is not
@@ -718,18 +764,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    1.  If the client knows the response arrived on an IPv4 connection,
        it SHOULD proceed with an IPv6 retry as below.
    2.  If the address family is unknown, it MAY retry over IPv6 once.
-
-
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 13]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    3.  If a successful *HTTP* response for this logical request attempt
        was already delivered over IPv6 (including when Happy Eyeballs
        [RFC8305] raced the underlying connections; see Section 5.1.5),
@@ -744,6 +778,13 @@ Internet-Draft               retry-over-ipv6                   June 2026
    authority.  The client SHOULD force address-family selection to IPv6
    for this retry.  The client MUST NOT change the host, scheme, or port
    solely because of 566 or Retry-Over-IPv6.
+
+
+
+Martin                   Expires 4 December 2026               [Page 14]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
 7.3.  Idempotent Methods
 
@@ -776,16 +817,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    body to the user or calling application for logging and support
    tickets.
 
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 14]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
 7.6.  Recovery Signaling
 
    On the first successful IPv6 request following a fully received 566
@@ -802,6 +833,14 @@ Internet-Draft               retry-over-ipv6                   June 2026
    all "IPv4" clients can switch address families.
 
 8.  Server and Operational Considerations
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 15]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
 8.1.  When to Send 566
 
@@ -835,13 +874,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    entities MUST NOT assume that end-user clients will suppress IPv6
    retries for non-idempotent methods.
 
-
-
-Martin                   Expires 3 December 2026               [Page 15]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    A 566 response does *not* guarantee that the first request had no
    effect.  Duplicate risk arises when:
 
@@ -858,6 +890,14 @@ Internet-Draft               retry-over-ipv6                   June 2026
    Because of this uncertainty, the responding entity SHOULD NOT send
    566 (or 503 with Retry-Over-IPv6: ?1) for non-idempotent methods such
    as POST when an IPv6 retry of the same request would cause
+
+
+
+Martin                   Expires 4 December 2026               [Page 16]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
    unacceptable duplicate side effects, unless the application provides
    deduplication (for example, an idempotency key), a request
    identifier, or another mechanism that makes the retry safe.  Where
@@ -891,13 +931,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
                                  Table 1
 
-
-
-Martin                   Expires 3 December 2026               [Page 16]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    Hard-failure counts are estimates: clients with no IPv6 path cannot
    send recovery signals in-band.
 
@@ -910,6 +943,16 @@ Internet-Draft               retry-over-ipv6                   June 2026
    IPv6, the *edge* sends 566 to the client when IPv4 to the edge is
    disabled — not necessarily the origin application.  The entity that
    generates 566 MUST know the client-facing address family.
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 17]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
 8.5.  Token Generation
 
@@ -927,6 +970,48 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    This section is informative.
 
+9.1.  HTTP Versions
+
+   No change to the on-the-wire status code or header field definitions
+   is required across HTTP versions.  Deployment considerations differ
+   mainly in how connections are managed:
+
+   *  *HTTP/1.1* — A 566 response typically applies to one request on a
+      single TCP connection.  The client closes that IPv4 connection
+      before retrying over IPv6, as described in Section 5.1.3.
+   *  *HTTP/2* — 566 is a connection-level signal for that TCP
+      connection.  A client SHOULD close the IPv4 HTTP/2 connection
+      (affecting all streams on it) before opening an IPv6 connection
+      for the retry.  Servers SHOULD emit 566 on every IPv4 HTTP/2
+      connection that receives a request during an outage, not only on
+      the first stream.
+   *  *HTTP/3* — The same semantics apply on a QUIC connection to the
+      authority.  HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2
+      over TCP; a client MAY hold concurrent connections of different
+      HTTP versions and address families.  A 566 received on an IPv4
+      QUIC connection does not automatically invalidate an existing IPv6
+      HTTP/3 connection, but the client MUST still apply Section 7.2
+      when the logical request attempt that received 566 has not yet
+      succeeded over IPv6.
+
+   Clients that discover HTTP/3 via Alt-Svc or similar mechanisms on an
+   IPv4 connection still need to evaluate 566 and Retry-Over-IPv6 before
+   treating the request as a general failure.  Operators SHOULD
+   configure load balancers and origins to emit the same signaling on
+   all HTTP versions they expose.
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 18]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
+9.2.  gRPC and Other HTTP APIs
+
    gRPC maps HTTP 566 to UNAVAILABLE, the same as 503. gRPC
    implementations SHOULD inspect Retry-Over-IPv6 on the HTTP response
    before aggregating multi-address connection errors, so that an IPv4
@@ -942,17 +1027,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    This section compares HTTP-layer signaling with other transition
    techniques.
-
-
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 17]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
 
       +====================+========================================+
       | Method             | Limitation for staged outages          |
@@ -978,6 +1052,20 @@ Internet-Draft               retry-over-ipv6                   June 2026
    HTTP-layer signaling complements DNS and network changes, especially
    when A records remain or when the client already connected over IPv4.
 
+
+
+
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 19]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
 11.  Security Considerations
 
    An attacker who can inject or modify HTTP responses could attempt to
@@ -995,6 +1083,17 @@ Internet-Draft               retry-over-ipv6                   June 2026
    authentication.  Deployments SHOULD rate-limit and treat forged
    recovery signals as untrusted hints.
 
+   The token carries no meaning to the client.  An operator MAY
+   nonetheless generate tokens that the operator can validate when
+   processing logs, so that random or forged recovery reports can be
+   discarded.  For example, a deployment might combine a site identifier
+   (such as the authority's domain name) with a random nonce and protect
+   the value with a keyed authenticator (such as an HMAC) using a secret
+   shared across the load-balanced fleet.  Such validation is for
+   operational filtering only; clients MUST NOT interpret token
+   structure, and token validation does not authenticate the client or
+   the recovery signal.
+
    566 responses that depend on the client-facing address family SHOULD
    use Cache-Control: private, no-store when appropriate to avoid cache
    poisoning.
@@ -1002,13 +1101,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
    This mechanism does not by itself provide confidentiality or
    integrity for retried requests.  Any security properties depend on
    the underlying transport and application protocol in use.
-
-
-
-Martin                   Expires 3 December 2026               [Page 18]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
 
 12.  IANA Considerations
 
@@ -1019,6 +1111,16 @@ Internet-Draft               retry-over-ipv6                   June 2026
    In the "Hypertext Transfer Protocol (HTTP) Status Code Registry"
    (https://www.iana.org/assignments/http-status-codes/
    (https://www.iana.org/assignments/http-status-codes/)):
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 20]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
                +=======+==================+===============+
                | Value | Description      | Reference     |
@@ -1056,16 +1158,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
    A browser receives:
 
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 19]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    HTTP/1.1 566 IPv4 Unavailable
    Retry-Over-IPv6: ?1
    IPv4-Unavailable-Until: Sun, 07 Jun 2026 00:00:00 GMT
@@ -1075,6 +1167,16 @@ Internet-Draft               retry-over-ipv6                   June 2026
    page load without displaying an error page.
 
 13.2.  Legacy Browser with HTML Body
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 21]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    HTTP/1.1 566 IPv4 Unavailable
    Retry-After: 86400
@@ -1112,16 +1214,6 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 14.1.  Normative References
 
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 20]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
-
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
@@ -1130,6 +1222,17 @@ Internet-Draft               retry-over-ipv6                   June 2026
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+
+
+
+
+
+
+Martin                   Expires 4 December 2026               [Page 22]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
 
    [RFC8305]  Schinazi, D. and T. Pauly, "Happy Eyeballs Version 2:
               Better Connectivity Using Concurrency", RFC 8305,
@@ -1141,11 +1244,27 @@ Internet-Draft               retry-over-ipv6                   June 2026
               DOI 10.17487/RFC9110, June 2022,
               <https://www.rfc-editor.org/info/rfc9110>.
 
+   [RFC9112]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
+              Ed., "HTTP/1.1", STD 99, RFC 9112, DOI 10.17487/RFC9112,
+              June 2022, <https://www.rfc-editor.org/info/rfc9112>.
+
+   [RFC9113]  Thomson, M., Ed. and C. Benfield, Ed., "HTTP/2", RFC 9113,
+              DOI 10.17487/RFC9113, June 2022,
+              <https://www.rfc-editor.org/info/rfc9113>.
+
+   [RFC9114]  Bishop, M., Ed., "HTTP/3", RFC 9114, DOI 10.17487/RFC9114,
+              June 2022, <https://www.rfc-editor.org/info/rfc9114>.
+
    [RFC9651]  Nottingham, M. and P. Kamp, "Structured Field Values for
               HTTP", RFC 9651, DOI 10.17487/RFC9651, September 2024,
               <https://www.rfc-editor.org/info/rfc9651>.
 
 14.2.  Informative References
+
+   [IETF71-IPV4-OUTAGE]
+              Internet Society, "IETF 71 IPv4 Outage", 2008,
+              <https://web.archive.org/web/20111016062408/
+              wiki.tools.isoc.org/IETF71_IPv4_Outage>.
 
    [KONEC-IPV4-CZ]
               CZ.NIC, "Konec IPv4 — Czech Republic IPv4 End Date",
@@ -1164,19 +1283,18 @@ Internet-Draft               retry-over-ipv6                   June 2026
               Internet Society, "World IPv6 Launch FAQ",
               <https://www.worldipv6launch.org/faq/>.
 
+
+
+Martin                   Expires 4 December 2026               [Page 23]
+
+Internet-Draft               retry-over-ipv6                   June 2026
+
+
    [WORLD-IPV6-LAUNCH]
               Internet Society, "World IPv6 Launch",
               <https://www.worldipv6launch.org/>.
 
 Author's Address
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 21]
-
-Internet-Draft               retry-over-ipv6                   June 2026
-
 
    Franck Martin
    Peachymango.org
@@ -1223,10 +1341,4 @@ Internet-Draft               retry-over-ipv6                   June 2026
 
 
 
-
-
-
-
-
-
-Martin                   Expires 3 December 2026               [Page 22]
+Martin                   Expires 4 December 2026               [Page 24]

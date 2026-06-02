@@ -50,7 +50,12 @@ application layer.</t>
 <t>Operators have adopted time-bounded <strong>planned IPv4 outages</strong> as a complement:
 deliberately making IPv4 service unavailable for minutes, hours, or days to
 expose software, protocol, and operational gaps before irreversible
-decommissioning.</t>
+decommissioning. The IETF meeting network ran an early example at IETF 71
+(Philadelphia, March 2008): an IPv6-only wireless network was available
+throughout the week, and IPv4 on the main meeting network was disabled for
+roughly one hour during the Wednesday plenary on 12 March 2008 so attendees
+could use IPv6-only Internet access and surface client stacks, applications,
+and services that still depended on IPv4 <xref target="IETF71-IPV4-OUTAGE"></xref>.</t>
 <t>Governments are also publishing fixed IPv4 end dates. For example, the Czech
 Republic approved a plan for state administration services to stop providing
 IPv4 on <strong>6 June 2032</strong> (6/6/2032) <xref target="KONEC-IPV4-CZ"></xref>. Operators facing such
@@ -84,6 +89,22 @@ estimate soft versus hard failure rates.</li>
 </ul>
 </section>
 
+<section anchor="scope"><name>Scope</name>
+<t>HTTP is not the only application protocol on the Internet. This document
+addresses HTTP first because it is widely deployed, visible to end users (for
+example in browsers), and pervasive in enterprise environments for web
+applications, APIs, and microservices behind load balancers. Other protocols
+might adopt analogous techniques for planned IPv4 outages; defining those
+signals is out of scope for this document.</t>
+<t>This specification is HTTP-version-agnostic: the status code, header fields, and
+client behavior apply equally to HTTP/1.1 <xref target="RFC9112"></xref>, HTTP/2 <xref target="RFC9113"></xref>, and
+HTTP/3 <xref target="RFC9114"></xref>, as they are defined in terms of HTTP semantics
+<xref target="RFC9110"></xref>. Wire-format examples use HTTP/1.1 message syntax for readability.
+Implementations MUST determine whether a request was received over IPv4 at the
+transport layer (TCP for HTTP/1.1 and HTTP/2, QUIC for HTTP/3), not from the
+HTTP version alone.</t>
+</section>
+
 <section anchor="technical-motivation"><name>Technical Motivation</name>
 <t>Many operators plan to remove or disable IPv4 while retaining IPv6 service.
 During migration, maintenance, or decommissioning, a client that connects over
@@ -94,9 +115,10 @@ explanation that the service no longer supports IPv4 (optionally until a stated
 time). Dual-stack clients on networks where Happy Eyeballs <xref target="RFC8305"></xref> selects
 IPv4 may treat the failure as a general outage unless the server explicitly
 signals that IPv4 is intentionally unavailable and IPv6 should be used instead.</t>
-<t>Application-to-application traffic (REST, gRPC over HTTP/2, and similar
-protocols) benefits from a machine-readable signal distinct from connectivity
-failures on other addresses. For example, a gRPC client that tries multiple
+<t>Application-to-application traffic carried over HTTP (for example REST-style
+APIs, gRPC, GraphQL, or JSON-RPC) benefits from a machine-readable signal
+distinct from connectivity failures on other addresses. For example, a gRPC
+client that tries multiple
 resolved addresses may surface an error from the first failing attempt, masking
 the fact that the meaningful signal was returned on an IPv4 connection.</t>
 </section>
@@ -653,6 +675,36 @@ available.</t>
 
 <section anchor="application-protocol-considerations"><name>Application Protocol Considerations</name>
 <t>This section is informative.</t>
+
+<section anchor="http-versions"><name>HTTP Versions</name>
+<t>No change to the on-the-wire status code or header field definitions is required
+across HTTP versions. Deployment considerations differ mainly in how connections
+are managed:</t>
+
+<ul spacing="compact">
+<li><strong>HTTP/1.1</strong> — A <tt>566</tt> response typically applies to one request on a single
+TCP connection. The client closes that IPv4 connection before retrying over
+IPv6, as described in <xref target="connection-lifecycle"></xref>.</li>
+<li><strong>HTTP/2</strong> — <tt>566</tt> is a connection-level signal for that TCP connection. A
+client SHOULD close the IPv4 HTTP/2 connection (affecting all streams on it)
+before opening an IPv6 connection for the retry. Servers SHOULD emit <tt>566</tt> on
+every IPv4 HTTP/2 connection that receives a request during an outage, not
+only on the first stream.</li>
+<li><strong>HTTP/3</strong> — The same semantics apply on a QUIC connection to the authority.
+HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY
+hold concurrent connections of different HTTP versions and address families.
+A <tt>566</tt> received on an IPv4 QUIC connection does not automatically invalidate
+an existing IPv6 HTTP/3 connection, but the client MUST still apply
+<xref target="ipv6-retry"></xref> when the logical request attempt that received <tt>566</tt> has not yet
+succeeded over IPv6.</li>
+</ul>
+<t>Clients that discover HTTP/3 via <tt>Alt-Svc</tt> or similar mechanisms on an IPv4
+connection still need to evaluate <tt>566</tt> and <tt>Retry-Over-IPv6</tt> before treating the
+request as a general failure. Operators SHOULD configure load balancers and
+origins to emit the same signaling on all HTTP versions they expose.</t>
+</section>
+
+<section anchor="grpc-and-other-http-apis"><name>gRPC and Other HTTP APIs</name>
 <t>gRPC maps HTTP <tt>566</tt> to <tt>UNAVAILABLE</tt>, the same as <tt>503</tt>. gRPC implementations
 SHOULD inspect <tt>Retry-Over-IPv6</tt> on the HTTP response before aggregating
 multi-address connection errors, so that an IPv4 policy signal is not confused
@@ -661,6 +713,7 @@ with IPv6 connectivity failure.</t>
 IPv6.&quot;</t>
 <t>Retry policies SHOULD retry over IPv6 when <tt>Retry-Over-IPv6: ?1</tt> is present,
 not blindly retry the same address list.</t>
+</section>
 </section>
 
 <section anchor="deployment-models"><name>Deployment Models</name>
@@ -714,6 +767,14 @@ monitor IPv6 reachability before signaling clients to retry over IPv6.</t>
 <t>Recovery headers and tokens are operational telemetry, not authentication.
 Deployments SHOULD rate-limit and treat forged recovery signals as untrusted
 hints.</t>
+<t>The token carries no meaning to the client. An operator MAY nonetheless
+generate tokens that the operator can validate when processing logs, so that
+random or forged recovery reports can be discarded. For example, a deployment
+might combine a site identifier (such as the authority's domain name) with a
+random nonce and protect the value with a keyed authenticator (such as an HMAC)
+using a secret shared across the load-balanced fleet. Such validation is for
+operational filtering only; clients MUST NOT interpret token structure, and
+token validation does not authenticate the client or the recovery signal.</t>
 <t><tt>566</tt> responses that depend on the client-facing address family SHOULD use
 <tt>Cache-Control: private, no-store</tt> when appropriate to avoid cache poisoning.</t>
 <t>This mechanism does not by itself provide confidentiality or integrity for
@@ -854,9 +915,21 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8305.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9110.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9112.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9113.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9114.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9651.xml"/>
 </references>
 <references><name>Informative References</name>
+<reference anchor="IETF71-IPV4-OUTAGE" target="https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage">
+  <front>
+    <title>IETF 71 IPv4 Outage</title>
+    <author>
+      <organization>Internet Society</organization>
+    </author>
+    <date year="2008"></date>
+  </front>
+</reference>
 <reference anchor="KONEC-IPV4-CZ" target="https://konecipv4.cz/en/">
   <front>
     <title>Konec IPv4 — Czech Republic IPv4 End Date</title>

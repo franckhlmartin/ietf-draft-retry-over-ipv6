@@ -57,7 +57,12 @@ application layer.
 Operators have adopted time-bounded **planned IPv4 outages** as a complement:
 deliberately making IPv4 service unavailable for minutes, hours, or days to
 expose software, protocol, and operational gaps before irreversible
-decommissioning.
+decommissioning. The IETF meeting network ran an early example at IETF 71
+(Philadelphia, March 2008): an IPv6-only wireless network was available
+throughout the week, and IPv4 on the main meeting network was disabled for
+roughly one hour during the Wednesday plenary on 12 March 2008 so attendees
+could use IPv6-only Internet access and surface client stacks, applications,
+and services that still depended on IPv4 [@?IETF71-IPV4-OUTAGE].
 
 Governments are also publishing fixed IPv4 end dates. For example, the Czech
 Republic approved a plan for state administration services to stop providing
@@ -89,6 +94,23 @@ HTTP-layer IPv4 outages address these gaps:
   `Retry-Over-IPv6-Recovery` (and optional tokens) in centralized logs to
   estimate soft versus hard failure rates.
 
+## Scope
+
+HTTP is not the only application protocol on the Internet. This document
+addresses HTTP first because it is widely deployed, visible to end users (for
+example in browsers), and pervasive in enterprise environments for web
+applications, APIs, and microservices behind load balancers. Other protocols
+might adopt analogous techniques for planned IPv4 outages; defining those
+signals is out of scope for this document.
+
+This specification is HTTP-version-agnostic: the status code, header fields, and
+client behavior apply equally to HTTP/1.1 [@!RFC9112], HTTP/2 [@!RFC9113], and
+HTTP/3 [@!RFC9114], as they are defined in terms of HTTP semantics
+[@!RFC9110]. Wire-format examples use HTTP/1.1 message syntax for readability.
+Implementations MUST determine whether a request was received over IPv4 at the
+transport layer (TCP for HTTP/1.1 and HTTP/2, QUIC for HTTP/3), not from the
+HTTP version alone.
+
 ## Technical Motivation
 
 Many operators plan to remove or disable IPv4 while retaining IPv6 service.
@@ -102,9 +124,10 @@ time). Dual-stack clients on networks where Happy Eyeballs [@!RFC8305] selects
 IPv4 may treat the failure as a general outage unless the server explicitly
 signals that IPv4 is intentionally unavailable and IPv6 should be used instead.
 
-Application-to-application traffic (REST, gRPC over HTTP/2, and similar
-protocols) benefits from a machine-readable signal distinct from connectivity
-failures on other addresses. For example, a gRPC client that tries multiple
+Application-to-application traffic carried over HTTP (for example REST-style
+APIs, gRPC, GraphQL, or JSON-RPC) benefits from a machine-readable signal
+distinct from connectivity failures on other addresses. For example, a gRPC
+client that tries multiple
 resolved addresses may surface an error from the first failing attempt, masking
 the fact that the meaningful signal was returned on an IPv4 connection.
 
@@ -673,6 +696,35 @@ available.
 
 This section is informative.
 
+## HTTP Versions
+
+No change to the on-the-wire status code or header field definitions is required
+across HTTP versions. Deployment considerations differ mainly in how connections
+are managed:
+
+* **HTTP/1.1** — A `566` response typically applies to one request on a single
+  TCP connection. The client closes that IPv4 connection before retrying over
+  IPv6, as described in (#connection-lifecycle).
+* **HTTP/2** — `566` is a connection-level signal for that TCP connection. A
+  client SHOULD close the IPv4 HTTP/2 connection (affecting all streams on it)
+  before opening an IPv6 connection for the retry. Servers SHOULD emit `566` on
+  every IPv4 HTTP/2 connection that receives a request during an outage, not
+  only on the first stream.
+* **HTTP/3** — The same semantics apply on a QUIC connection to the authority.
+  HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY
+  hold concurrent connections of different HTTP versions and address families.
+  A `566` received on an IPv4 QUIC connection does not automatically invalidate
+  an existing IPv6 HTTP/3 connection, but the client MUST still apply
+  (#ipv6-retry) when the logical request attempt that received `566` has not yet
+  succeeded over IPv6.
+
+Clients that discover HTTP/3 via `Alt-Svc` or similar mechanisms on an IPv4
+connection still need to evaluate `566` and `Retry-Over-IPv6` before treating the
+request as a general failure. Operators SHOULD configure load balancers and
+origins to emit the same signaling on all HTTP versions they expose.
+
+## gRPC and Other HTTP APIs
+
 gRPC maps HTTP `566` to `UNAVAILABLE`, the same as `503`. gRPC implementations
 SHOULD inspect `Retry-Over-IPv6` on the HTTP response before aggregating
 multi-address connection errors, so that an IPv4 policy signal is not confused
@@ -713,6 +765,15 @@ monitor IPv6 reachability before signaling clients to retry over IPv6.
 Recovery headers and tokens are operational telemetry, not authentication.
 Deployments SHOULD rate-limit and treat forged recovery signals as untrusted
 hints.
+
+The token carries no meaning to the client. An operator MAY nonetheless
+generate tokens that the operator can validate when processing logs, so that
+random or forged recovery reports can be discarded. For example, a deployment
+might combine a site identifier (such as the authority's domain name) with a
+random nonce and protect the value with a keyed authenticator (such as an HMAC)
+using a secret shared across the load-balanced fleet. Such validation is for
+operational filtering only; clients MUST NOT interpret token structure, and
+token validation does not authenticate the client or the recovery signal.
 
 `566` responses that depend on the client-facing address family SHOULD use
 `Cache-Control: private, no-store` when appropriate to avoid cache poisoning.
@@ -806,6 +867,16 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 ~~~
 
 An edge log pipeline joins both events on `token=abc123`.
+
+<reference anchor="IETF71-IPV4-OUTAGE" target="https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage">
+  <front>
+    <title>IETF 71 IPv4 Outage</title>
+    <author>
+      <organization>Internet Society</organization>
+    </author>
+    <date year="2008"/>
+  </front>
+</reference>
 
 <reference anchor="WORLD-IPV6-DAY" target="https://www.worldipv6launch.org/faq/">
   <front>
