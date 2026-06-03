@@ -1,5 +1,8 @@
 # ietf-draft-retry-over-ipv6
 
+**IETF Internet-Draft:** Version `-00` has been submitted to the IETF and is
+tracked on the [IETF Datatracker](https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/).
+
 This repository contains the source for the IETF Internet-Draft:
 **"HTTP Signaling of Planned IPv4 Unavailability"**.
 

@@ -3,8 +3,15 @@
 Significant content changes to `draft-martin-retry-over-ipv6.md` are recorded here.
 Formatting-only edits are omitted unless they affect published semantics.
 
+**Submitted to IETF:** `draft-martin-retry-over-ipv6-00` has been submitted as an
+IETF Internet-Draft and is tracked at
+<https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/>.
+
 ## Unreleased
 
+- **README / CHANGELOG:** note that `-00` is submitted and link to IETF Datatracker.
+- **Submission hygiene:** Unicode em/en dashes replaced with ASCII (`---`, `-`)
+  for Datatracker XML checks.
 - **Build:** `scripts/fix-mmark-xml.py` removes mmark's invalid outer
   `References` wrapper; title-block `date` moved above `[seriesInfo]` (TOML
   scoping).
@@ -37,9 +44,11 @@ Formatting-only edits are omitted unless they affect published semantics.
   (`127.0.0.0/8`), since loopback often stays up during planned routable IPv4
   outages (health checks, local admin).
 
-## [draft-martin-retry-over-ipv6-00] — 2026-06-06
+## [draft-martin-retry-over-ipv6-00] - 2026-06-06 (submitted)
 
 Initial Internet-Draft: **HTTP Signaling of Planned IPv4 Unavailability**.
+Submitted to the IETF; see
+<https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/>.
 
 - Motivation for planned IPv4 outages (World IPv6 Day/Launch context, HTTP-layer
   vs network/DNS-only approaches).

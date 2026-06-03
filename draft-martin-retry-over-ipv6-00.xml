@@ -44,8 +44,8 @@ to measure brokenness in clients, networks, and middleboxes
 <xref target="WORLD-IPV6-DAY"></xref>. World IPv6 Launch (6 June 2012) moved many of those sites
 to permanently enabled IPv6 <xref target="WORLD-IPV6-LAUNCH"></xref>. Some participants retained
 IPv6; others reverted toward IPv4-only operation until a later 6/6 commitment.
-These events tested enabling IPv6; the inverse problem — identifying what still
-breaks when IPv4 is intentionally unavailable — remains under-specified at the
+These events tested enabling IPv6; the inverse problem --- identifying what still
+breaks when IPv4 is intentionally unavailable --- remains under-specified at the
 application layer.</t>
 <t>Operators have adopted time-bounded <strong>planned IPv4 outages</strong> as a complement:
 deliberately making IPv4 service unavailable for minutes, hours, or days to
@@ -59,31 +59,31 @@ and services that still depended on IPv4 <xref target="IETF71-IPV4-OUTAGE"></xre
 <t>Governments are also publishing fixed IPv4 end dates. For example, the Czech
 Republic approved a plan for state administration services to stop providing
 IPv4 on <strong>6 June 2032</strong> (6/6/2032) <xref target="KONEC-IPV4-CZ"></xref>. Operators facing such
-deadlines need staged transition mechanisms — including time-bounded planned
-outages, clear user messaging, and measurable HTTP-layer signals — long before
+deadlines need staged transition mechanisms --- including time-bounded planned
+outages, clear user messaging, and measurable HTTP-layer signals --- long before
 the final cutover date.</t>
 <t>Network-layer IPv4 removal is a poor fit for staged drills:</t>
 
 <ul spacing="compact">
-<li>Rollback is hard — routing, ACL, and DNS changes propagate slowly and are
+<li>Rollback is hard --- routing, ACL, and DNS changes propagate slowly and are
 error-prone under pressure.</li>
-<li>End users lack context — a silent timeout looks like a site outage, not an
+<li>End users lack context --- a silent timeout looks like a site outage, not an
 IPv4-path policy.</li>
-<li>Impact is unmeasured — without an HTTP-visible signal, operators cannot count
+<li>Impact is unmeasured --- without an HTTP-visible signal, operators cannot count
 affected clients or quantify business loss (even a small percentage of
 requests can be material).</li>
 </ul>
 <t>HTTP-layer IPv4 outages address these gaps:</t>
 
 <ul spacing="compact">
-<li><strong>Easy rollback</strong> — disable the <tt>566</tt> policy at the load balancer or origin
+<li><strong>Easy rollback</strong> --- disable the <tt>566</tt> policy at the load balancer or origin
 without waiting for DNS TTL expiry.</li>
-<li><strong>Advance communication</strong> — site banners, email, and status pages can
+<li><strong>Advance communication</strong> --- site banners, email, and status pages can
 reference the same window as <tt>IPv4-Unavailable-Until</tt>.</li>
-<li><strong>Clear user messaging</strong> — a response body explains that IPv4 is
+<li><strong>Clear user messaging</strong> --- a response body explains that IPv4 is
 intentionally unavailable, when service may resume, and that IPv6 (or
 contacting an ISP or IT department) is the remedy.</li>
-<li><strong>Operator metrics</strong> — count <tt>566</tt> responses and join them with
+<li><strong>Operator metrics</strong> --- count <tt>566</tt> responses and join them with
 <tt>Retry-Over-IPv6-Recovery</tt> (and optional tokens) in centralized logs to
 estimate soft versus hard failure rates.</li>
 </ul>
@@ -154,13 +154,13 @@ entity that receives a request over IPv4 sends:</t>
 
 <ol spacing="compact">
 <li><strong><tt>566</tt> (IPv4 Unavailable)</strong>, or during transitional deployments <strong><tt>503
-Service Unavailable</tt></strong> with the same header fields — the IPv4 path is
+Service Unavailable</tt></strong> with the same header fields --- the IPv4 path is
 unavailable; the service is not a general outage if IPv6 is expected to work.</li>
-<li><strong><tt>Retry-Over-IPv6: ?1</tt></strong> — the client should retry the same request over
+<li><strong><tt>Retry-Over-IPv6: ?1</tt></strong> --- the client should retry the same request over
 IPv6.</li>
-<li><strong><tt>IPv4-Unavailable-Until</tt></strong> (optional) — when IPv4 service may be restored.</li>
+<li><strong><tt>IPv4-Unavailable-Until</tt></strong> (optional) --- when IPv4 service may be restored.</li>
 <li><strong><tt>Retry-Over-IPv6-Token</tt></strong> (optional, on the IPv4-unavailability response)
-and <strong><tt>Retry-Over-IPv6-Recovery</tt></strong> (on a successful IPv6 retry) — optional
+and <strong><tt>Retry-Over-IPv6-Recovery</tt></strong> (on a successful IPv6 retry) --- optional
 telemetry so operators can correlate soft failures across load-balanced
 backends.</li>
 </ol>
@@ -202,7 +202,7 @@ and <tt>Retry-Over-IPv6-Token</tt>.</t>
 
 <section anchor="status-code-selection"><name>Status Code Selection</name>
 <t>This document registers <tt>566</tt> (IPv4 Unavailable) in the HTTP status code range
-512–599, which is currently unassigned. The code number is chosen to align with
+512-599, which is currently unassigned. The code number is chosen to align with
 <strong>6/6 (June 6)</strong>, the date used for coordinated IPv6 deployment events such as
 World IPv6 Launch, and embeds <strong>66</strong> as a mnemonic for IPv6 within the 5xx
 server-error class. This mnemonic is for human operability only; protocol
@@ -269,7 +269,7 @@ which IPv4 service for this authority may be restored.</t>
 <t>For a permanent IPv6-only transition, this field MAY be omitted; permanence
 SHOULD be stated in the response body instead.</t>
 <t>This field is informational for logging and client caching. It does not mean
-the client should wait until that time before retrying over IPv6 — the IPv6
+the client should wait until that time before retrying over IPv6 --- the IPv6
 retry SHOULD happen promptly (subject to the client algorithm in
 <xref target="client-requirements"></xref>).</t>
 <t><tt>IPv4-Unavailable-Until</tt> differs from <tt>Retry-After</tt> <xref target="RFC9110"></xref>: <tt>Retry-After</tt>
@@ -396,7 +396,7 @@ That specification assumes a destination-address preference that favors IPv6
 on an early <tt>A</tt> response so an <tt>AAAA</tt> response can arrive, and interleaving of
 address families when connection attempts begin. Implementations MAY adapt those
 delays when local policy differs, and Section 4 of <xref target="RFC8305"></xref> permits
-address sorting that reflects measured round-trip times or prior use — in
+address sorting that reflects measured round-trip times or prior use --- in
 practice, some stacks therefore make a <strong>best effort to prefer IPv6</strong>, while
 others under some network conditions will <strong>attempt IPv4 earlier or more
 often</strong> than a strict IPv6-first policy would suggest.</t>
@@ -410,8 +410,8 @@ at the TCP/IP layer only; Section 9.2 explicitly notes that the application
 <strong>RFC 8305 does not specify that an HTTP <tt>5xx</tt> response on one connection
 counts as failure for all parallel connection attempts.</strong> A <tt>566</tt> (or <tt>503</tt>
 with <tt>Retry-Over-IPv6: ?1</tt>) is an HTTP response on an already-established
-connection; handling it — including whether to retry over the other address
-family — is <strong>outside</strong> the Happy Eyeballs connection-race algorithm and is
+connection; handling it --- including whether to retry over the other address
+family --- is <strong>outside</strong> the Happy Eyeballs connection-race algorithm and is
 left to the HTTP client or application.</t>
 <t>Implications for this document:</t>
 
@@ -419,14 +419,14 @@ left to the HTTP client or application.</t>
 <li>If IPv6 completes the transport handshake and delivers a successful HTTP
 response first, the client MAY cancel the IPv4 attempt before <tt>566</tt> is
 received. No <tt>Retry-Over-IPv6-Recovery</tt> is sent. <tt>566</tt> counts may
-under-represent total exposure — this is often the desired outcome during an
+under-represent total exposure --- this is often the desired outcome during an
 outage.</li>
 <li>The client MUST send <tt>Retry-Over-IPv6-Recovery</tt> only if it fully received
 <tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) on an IPv4 connection for this
 logical request attempt.</li>
 <li>If IPv6 already succeeded for this logical request attempt at the HTTP
 layer, the client MUST NOT treat a late or abandoned IPv4 <tt>566</tt> as requiring
-another IPv6 retry or recovery signal — regardless of how Happy Eyeballs
+another IPv6 retry or recovery signal --- regardless of how Happy Eyeballs
 raced the underlying connections.</li>
 <li>An aware client that receives <tt>566</tt> only on IPv4 and has not yet succeeded
 over IPv6 MUST apply the IPv6 retry requirements in <xref target="ipv6-retry"></xref>; that
@@ -459,9 +459,9 @@ The body SHOULD briefly explain, in plain language, that the Internet is
 transitioning to a newer protocol generation (IPv6) and that this service may
 not be reachable over the older generation (IPv4) on the reader's network path.
 The body SHOULD give the reader concrete information they can pass to their
-Internet service provider (ISP) or organization IT department — for example,
+Internet service provider (ISP) or organization IT department --- for example,
 that the site may require IPv6 but their system or network does not appear to
-support it — and SHOULD ask them to investigate why IPv6 is not working. When
+support it --- and SHOULD ask them to investigate why IPv6 is not working. When
 <tt>IPv4-Unavailable-Until</tt> is present, the body SHOULD state when service over
 the older connection may resume in plain language.</t>
 <t>The following plain-text example is suitable for <tt>Content-Type: text/plain</tt> or
@@ -471,7 +471,7 @@ as the text content of an HTML page as <tt>Content-Type: text/html</tt>:</t>
 service is not reachable over the older generation (IPv4) on your network.
 You probably cannot fix this yourself.</t>
 <t>Contact your Internet provider or your organization's IT help desk and say:
-&quot;I cannot reach this site — it may require IPv6, but my system does not seem
+&quot;I cannot reach this site --- it may require IPv6, but my system does not seem
 to work with IPv6.&quot; Ask them why IPv6 is not working for you and whether
 they can enable it.</t>
 <t>If this is a planned outage, service over the older connection may resume
@@ -524,7 +524,7 @@ retry. The client MUST NOT change the host, scheme, or port solely because of
 <tt>Retry-Over-IPv6: ?1</tt>) SHOULD retry the same method, target URI, and body over
 IPv6 (see <xref target="ipv6-retry"></xref>). For safe methods <xref target="RFC9110"></xref>, such a retry is
 generally acceptable. For non-idempotent methods such as <tt>POST</tt>, the same retry
-can cause duplicate processing — for example, a duplicate payment, order, or
+can cause duplicate processing --- for example, a duplicate payment, order, or
 database insert. Responding entities and operators SHOULD follow the guidance in
 <xref target="idempotent-methods"></xref> on when not to send <tt>566</tt> for such requests.</t>
 </section>
@@ -573,7 +573,7 @@ operators SHOULD not assume all &quot;IPv4&quot; clients can switch address fami
 acceptable or prevented (see <xref target="idempotent-methods"></xref>).</li>
 </ul>
 <t>The responding entity MAY omit <tt>566</tt> (and the transitional <tt>503</tt> with
-<tt>Retry-Over-IPv6</tt>) for requests received on the IPv4 loopback interface — for
+<tt>Retry-Over-IPv6</tt>) for requests received on the IPv4 loopback interface --- for
 example, when the client-facing connection uses addresses in <tt>127.0.0.0/8</tt>
 such as <tt>127.0.0.1</tt>. Routable IPv4 service may be disabled during a planned
 outage while loopback remains available for local health checks, monitoring, and
@@ -585,7 +585,7 @@ permanent IPv6-only service.</t>
 
 <section anchor="idempotent-methods"><name>Idempotent Methods and Duplicate Processing</name>
 <t>As described in <xref target="client-idempotent-methods"></xref>, aware clients SHOULD retry after
-<tt>566</tt>, including for non-idempotent methods — which can cause duplicate
+<tt>566</tt>, including for non-idempotent methods --- which can cause duplicate
 processing. Clients cannot generally determine whether a given application or
 resource tolerates duplicate processing. Responding entities MUST NOT assume that
 end-user clients will suppress IPv6 retries for non-idempotent methods.</t>
@@ -595,9 +595,9 @@ Duplicate risk arises when:</t>
 <ul spacing="compact">
 <li><strong><tt>566</tt> is generated at an edge or load balancer</strong> while an origin server
 already started or completed processing the request on the IPv4 path.</li>
-<li><strong>Policy races during rollout</strong> — IPv4-unavailability policy may be enabled or
+<li><strong>Policy races during rollout</strong> --- IPv4-unavailability policy may be enabled or
 disabled while requests are in flight.</li>
-<li><strong>Late IPv4 responses versus an IPv6 retry</strong> — when Happy Eyeballs
+<li><strong>Late IPv4 responses versus an IPv6 retry</strong> --- when Happy Eyeballs
 <xref target="RFC8305"></xref> or a prior IPv6 attempt is in play, a client may retry or complete
 work without deduplication at the application layer (see
 <xref target="interaction-with-happy-eyeballs"></xref>).</li>
@@ -656,7 +656,7 @@ response based on them.</t>
 
 <section anchor="cdn-and-reverse-proxy-deployment"><name>CDN and Reverse Proxy Deployment</name>
 <t>When an edge terminates client IPv4 and connects to an origin over IPv6, the
-<strong>edge</strong> sends <tt>566</tt> to the client when IPv4 to the edge is disabled — not
+<strong>edge</strong> sends <tt>566</tt> to the client when IPv4 to the edge is disabled --- not
 necessarily the origin application. The entity that generates <tt>566</tt> MUST know
 the client-facing address family.</t>
 </section>
@@ -682,15 +682,15 @@ across HTTP versions. Deployment considerations differ mainly in how connections
 are managed:</t>
 
 <ul spacing="compact">
-<li><strong>HTTP/1.1</strong> — A <tt>566</tt> response typically applies to one request on a single
+<li><strong>HTTP/1.1</strong> --- A <tt>566</tt> response typically applies to one request on a single
 TCP connection. The client closes that IPv4 connection before retrying over
 IPv6, as described in <xref target="connection-lifecycle"></xref>.</li>
-<li><strong>HTTP/2</strong> — <tt>566</tt> is a connection-level signal for that TCP connection. A
+<li><strong>HTTP/2</strong> --- <tt>566</tt> is a connection-level signal for that TCP connection. A
 client SHOULD close the IPv4 HTTP/2 connection (affecting all streams on it)
 before opening an IPv6 connection for the retry. Servers SHOULD emit <tt>566</tt> on
 every IPv4 HTTP/2 connection that receives a request during an outage, not
 only on the first stream.</li>
-<li><strong>HTTP/3</strong> — The same semantics apply on a QUIC connection to the authority.
+<li><strong>HTTP/3</strong> --- The same semantics apply on a QUIC connection to the authority.
 HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY
 hold concurrent connections of different HTTP versions and address families.
 A <tt>566</tt> received on an IPv4 QUIC connection does not automatically invalidate
@@ -878,8 +878,9 @@ Internet connection.</p><p>The Internet is moving to a newer protocol
 generation called IPv6. This service is not reachable over the older
 generation (IPv4) on your network. You probably cannot fix this
 yourself.</p><p>Contact your Internet provider or your organization's
-IT help desk and say: &quot;I cannot reach this site — it may require
-IPv6, but my system does not seem to work with IPv6.&quot; Ask them
+IT help desk and say:
+&quot;I cannot reach this site --- it may require IPv6, but my system
+does not seem to work with IPv6.&quot; Ask them
 why IPv6 is not working for you and whether they can enable it.</p>
 <p>If this is a planned outage, service over the older connection may
 resume after 7 June 2026, 00:00 UTC.</p></body></html>
