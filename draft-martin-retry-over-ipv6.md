@@ -6,11 +6,11 @@ area = "art"
 workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 
-date = 2026-06-06
+date = 2026-06-11
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-martin-retry-over-ipv6-00"
+value = "draft-martin-retry-over-ipv6-01"
 stream = "IETF"
 status = "standard"
 
@@ -33,8 +33,11 @@ fields that signal an intentional, often time-bounded IPv4 outage, instruct
 aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
-logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+logs. The mechanism supports staged enterprise rollouts, internal HTTP services,
+and permanent IPv6-only migration; coordinated public events (for example, 6/6
+drills) remain possible with advance notice. The primary intended deployment is
+operator-controlled environments where provider and users share operational
+responsibility. Legacy clients that do not implement this specification treat an unrecognized
 `566` status code as an internal server error and MAY use the response body for
 human-readable guidance.
 
@@ -64,12 +67,24 @@ roughly one hour during the Wednesday plenary on 12 March 2008 so attendees
 could use IPv6-only Internet access and surface client stacks, applications,
 and services that still depended on IPv4 [@?IETF71-IPV4-OUTAGE].
 
-Governments are also publishing fixed IPv4 end dates. For example, the Czech
-Republic approved a plan for state administration services to stop providing
-IPv4 on **6 June 2032** (6/6/2032) [@?KONEC-IPV4-CZ]. Operators facing such
-deadlines need staged transition mechanisms --- including time-bounded planned
-outages, clear user messaging, and measurable HTTP-layer signals --- long before
-the final cutover date.
+Governments are publishing IPv6 transition policies with varying specificity.
+The Czech Republic approved a plan for state administration services to stop
+providing IPv4 on **6 June 2032** (6/6/2032) [@?KONEC-IPV4-CZ] --- one of the
+few published fixed IPv4 end dates. Other governments set phased milestones or
+adoption requirements rather than a single shutdown date. The United States
+Office of Management and Budget Memorandum M-21-07 [@?OMB-M-21-07] requires
+federal agencies to operate at least 20%, 50%, and 80% of IP-enabled assets in
+IPv6-only environments by the end of fiscal years 2023, 2024, and 2025
+respectively, with strategic intent to phase out IPv4. The Netherlands places
+IPv6 on the mandatory "use-or-explain" list for public-sector procurement
+[@?NL-FS-IPV6]. Washington State policy EA-04 [@?WA-EA-04] requires state
+agencies to migrate infrastructure and applications to IPv6 as IPv4 becomes
+unsupported. Such mandates are frequently declared yet only partially met; a
+contributing factor may be the absence of standardized, reversible transition
+mechanisms at the application layer, which this document aims to address.
+Operators facing such deadlines need staged transition mechanisms
+--- including time-bounded planned outages, clear user messaging, and measurable
+HTTP-layer signals --- long before the final cutover date.
 
 Network-layer IPv4 removal is a poor fit for staged drills:
 
@@ -99,9 +114,41 @@ HTTP-layer IPv4 outages address these gaps:
 HTTP is not the only application protocol on the Internet. This document
 addresses HTTP first because it is widely deployed, visible to end users (for
 example in browsers), and pervasive in enterprise environments for web
-applications, APIs, and microservices behind load balancers. Other protocols
-might adopt analogous techniques for planned IPv4 outages; defining those
-signals is out of scope for this document.
+applications, APIs, and microservices behind load balancers. Container
+networking, prefix delegation, and CNI configuration are out of scope; this
+document defines HTTP signaling only on paths where it is deployed. Operators
+**MAY** apply the same signaling on internal HTTP load balancers, API gateways,
+or service-mesh ingress when IPv4 is intentionally unavailable on that hop.
+Other protocols might adopt analogous techniques for planned IPv4 outages;
+defining those signals is out of scope for this document.
+
+## Intended Deployment {#intended-deployment}
+
+Operators **SHOULD NOT** deploy planned IPv4 outages with `566` signaling on the
+open Internet as a routine IPv6 migration technique. Public use can annoy users:
+legacy clients treat an unrecognized `566` as `500 Internal Server Error`, aware
+clients must close the IPv4 connection and retry, and users on IPv4-only paths
+see an error even when the service remains available over IPv6 on other paths.
+Unannounced or frequent public drills risk support load and reputational harm.
+
+When an operator is **obliged** to run a planned IPv4 outage --- for example, a
+fixed government cutover deadline, a coordinated industry drill with advance
+notice, or an irreversible network-layer change --- HTTP-layer signaling is a
+viable **interim** step compared with silent timeouts or DNS-only withdrawal: it
+is reversible, measurable, and gives aware clients an explicit retry path.
+
+This mechanism is **primarily intended** for **closed or operator-controlled
+environments** where the service provider and the user population are the same
+entity or share operational responsibility --- for example, enterprise
+intranets, government administration networks, internal API gateways, staging
+environments, and microservice deployments where clients are operated by the
+same organization. In those settings, operators can deploy aware clients,
+communicate maintenance windows, and interpret soft versus hard failure metrics
+without imposing unexplained errors on unrelated Internet users.
+
+Public Internet use **MAY** remain appropriate for time-bounded, widely
+communicated events (for example, 6/6 drills) when advance user communication is
+proportional to expected impact.
 
 This specification is HTTP-version-agnostic: the status code, header fields, and
 client behavior apply equally to HTTP/1.1 [@!RFC9112], HTTP/2 [@!RFC9113], and
@@ -113,7 +160,7 @@ HTTP version alone.
 
 ## Technical Motivation
 
-Many operators plan to remove or disable IPv4 while retaining IPv6 service.
+Some operators plan to remove or disable IPv4 while retaining IPv6 service.
 During migration, maintenance, or decommissioning, a client that connects over
 IPv4 may observe connection failures or HTTP errors even though the same origin
 remains available over IPv6.
@@ -130,6 +177,15 @@ distinct from connectivity failures on other addresses. For example, a gRPC
 client that tries multiple
 resolved addresses may surface an error from the first failing attempt, masking
 the fact that the meaningful signal was returned on an IPv4 connection.
+
+HTTP APIs behind ingress are a common place to **start** IPv6 transition drills,
+especially in operator-controlled environments (see (#intended-deployment)).
+Some application architectures exhibit **asymmetric dual-stack**: dual-stack or
+IPv6-capable **north-south** paths (clients to ingress) alongside IPv4-only
+**east-west** paths (ingress to pods, service-to-service calls, or background
+workers). Planned IPv4 outages at the HTTP layer help find client and partner
+dependencies; they may **miss** internal-only IPv4 unless the same policy is
+also applied on internal HTTP entry points (see (#split-stack-deployments)).
 
 ## Requirements Language
 
@@ -156,7 +212,11 @@ in this document.
 
 **Soft failure**: A client receives `566` (or transitional `503` with
 `Retry-Over-IPv6`) over IPv4 and subsequently completes the same request
-successfully over IPv6.
+successfully over IPv6. Soft and hard failure classification is **per aware
+client and per signaling hop** (the entity that returned `566`), not
+end-to-end application success. A soft failure does not guarantee that
+downstream processing (for example, origin work reached over an IPv4-only pod
+network) succeeded.
 
 **Hard failure**: A client receives `566` over IPv4 but cannot successfully
 complete the request over IPv6.
@@ -620,7 +680,8 @@ administration; those clients do not need a signal to retry over IPv6.
 
 Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
-permanent IPv6-only service.
+permanent IPv6-only service. Operators on the open Internet **SHOULD** follow
+(#intended-deployment) before enabling `566` policy.
 
 ## Idempotent Methods and Duplicate Processing {#idempotent-methods}
 
@@ -656,7 +717,7 @@ tests. APIs that must remain available for non-idempotent methods through a
 planned IPv4 outage SHOULD document and implement application-level
 deduplication or other safe-retry semantics explicitly.
 
-## Measuring Outage Impact
+## Measuring Outage Impact {#measuring-outage-impact}
 
 Operators SHOULD instrument at the edge or load balancer, aggregating all
 backends:
@@ -671,6 +732,20 @@ Unrecovered 566 | `566 count - paired recoveries` (estimated hard fail and legac
 Hard-failure counts are estimates: clients with no IPv6 path cannot send
 recovery signals in-band.
 
+Interpreting metrics during a drill:
+
+* **High soft-failure rate with low user-visible errors** --- client path to the
+  signaling entity is likely OK; a good result **at that hop**.
+* **High soft-failure rate with elevated origin 5xx or latency** --- possible
+  **split-stack** deployment: clients reached IPv6 at the edge while backends or
+  internal hops still depend on IPv4 (see (#split-stack-deployments)).
+* **Low recovery relative to `566` count** --- hard failures, legacy clients, or
+  clients without an IPv6 path.
+
+Operators **SHOULD** correlate edge `566` and recovery metrics with **origin,
+worker, and downstream dependency** health during an outage window, not rely on
+edge metrics alone.
+
 The responding entity SHOULD log recovery headers but MUST NOT alter the
 response based on them.
 
@@ -680,6 +755,35 @@ When an edge terminates client IPv4 and connects to an origin over IPv6, the
 **edge** sends `566` to the client when IPv4 to the edge is disabled --- not
 necessarily the origin application. The entity that generates `566` MUST know
 the client-facing address family.
+
+When ingress **terminates IPv6** from clients but uses **IPv4 toward
+origin servers or pods**, disabling IPv4 **to the edge** exercises client paths;
+disabling IPv4 on an **internal HTTP gateway** (ingress-to-origin, API gateway,
+or service-mesh ingress) exercises **service-to-service** HTTP that still uses
+operator-controlled hostnames. The same `566` semantics apply on each hop where
+IPv4 is intentionally unavailable.
+
+## Split-Stack and Multi-Hop Deployments {#split-stack-deployments}
+
+In some container and cloud deployments, **public ingress** is dual-stack while
+**pod or cluster networks remain IPv4-only** (or use IPv6 only for ULA or
+translation, not for the paths clients use). Platform IPv6 inside the cluster
+often lags public dual-stack at the edge.
+
+`566` is emitted based on the **client-facing transport** at the responding
+entity (see (#when-to-send-566)). It does **not** probe east-west paths,
+sidecars, background workers, or callbacks that use cluster-internal IPv4 names
+or addresses.
+
+A drill can therefore show **high soft-failure rates** (the client retried over
+IPv6 and received success from the load balancer) while **internal HTTP** still
+depends on IPv4 and fails or degrades downstream.
+
+Operators **SHOULD** treat edge-only drills as **necessary but not sufficient**
+for IPv6-only readiness. Operators **SHOULD** extend staged outages to **internal
+HTTP gateways** where policy applies and **SHOULD** correlate edge `566` and
+recovery metrics with origin and downstream error rates during the window, as
+described in (#measuring-outage-impact).
 
 ## Token Generation
 
@@ -746,10 +850,12 @@ DNS-only (withdraw A records) | Hard rollback; poor application errors; difficul
 Network ACL or routing | Complex rollback; timeouts instead of policy signals; weak metrics
 Happy Eyeballs alone [@!RFC8305] | Implicit; may misattribute IPv4 policy as IPv6 brokenness
 Site banner only | Applications and APIs do not see banners; no automatic IPv6 retry
-HTTP 566 + headers (this document) | Reversible at LB; structured retry; measurable soft/hard fail
+HTTP 566 + headers (this document) | Reversible at LB; structured retry; measurable soft/hard fail; measures client-to-signaling-entity path only
 
 HTTP-layer signaling complements DNS and network changes, especially when A
-records remain or when the client already connected over IPv4.
+records remain or when the client already connected over IPv4. Internal
+back-end address families and east-west paths require separate drills or
+metrics (see (#split-stack-deployments)).
 
 # Security Considerations
 
@@ -869,6 +975,22 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 
 An edge log pipeline joins both events on `token=abc123`.
 
+## Ingress Soft Failure with Internal IPv4 Dependency
+
+This example is informative. It illustrates that **edge soft failure does not
+imply stack-wide IPv6 readiness** (see (#split-stack-deployments)).
+
+1. A dual-stack client connects to public ingress over IPv4 and receives `566`
+   with `Retry-Over-IPv6: ?1`.
+2. The client retries over IPv6; ingress returns `200 OK` with
+   `Retry-Over-IPv6-Recovery` --- a **soft failure** at the edge.
+3. Ingress forwards the request to a worker pod over cluster IPv4; the pod cannot
+   reach a dependency that was only tested over internal IPv4, and the client
+   eventually receives `502 Bad Gateway` or `504 Gateway Timeout`.
+
+Operators SHOULD not conclude IPv6-only migration is complete from edge recovery
+metrics alone when internal paths were not exercised.
+
 <reference anchor="IETF71-IPV4-OUTAGE" target="https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage">
   <front>
     <title>IETF 71 IPv4 Outage</title>
@@ -902,6 +1024,34 @@ An edge log pipeline joins both events on `token=abc123`.
     <title>Konec IPv4 - Czech Republic IPv4 End Date</title>
     <author>
       <organization>CZ.NIC</organization>
+    </author>
+  </front>
+</reference>
+
+<reference anchor="NL-FS-IPV6" target="https://www.forumstandaardisatie.nl/open-standaarden/ipv6">
+  <front>
+    <title>Internet Protocol version 6 (IPv6)</title>
+    <author>
+      <organization>Forum Standaardisatie</organization>
+    </author>
+  </front>
+</reference>
+
+<reference anchor="OMB-M-21-07" target="https://www.whitehouse.gov/wp-content/uploads/2020/11/M-21-07.pdf">
+  <front>
+    <title>Completing the Transition to Internet Protocol Version 6 (IPv6)</title>
+    <author>
+      <organization>Office of Management and Budget</organization>
+    </author>
+    <date year="2020" month="November"/>
+  </front>
+</reference>
+
+<reference anchor="WA-EA-04" target="https://watech.wa.gov/policies/internet-protocol-version-6-ipv6-implementation-policy">
+  <front>
+    <title>Internet Protocol Version 6 (IPv6) Implementation Policy</title>
+    <author>
+      <organization>Washington State Office of the Chief Information Officer</organization>
     </author>
   </front>
 </reference>

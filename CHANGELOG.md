@@ -9,6 +9,29 @@ IETF Internet-Draft and is tracked at
 
 ## Unreleased
 
+- **Introduction (§1.1):** note that government IPv6 mandates are often only
+  partially met, possibly for lack of application-layer transition mechanisms
+  this document addresses; additional examples (US OMB M-21-07, Netherlands,
+  Washington State EA-04); Czech Republic as rare fixed IPv4 end date.
+- **Intended deployment (§1.3):** primary use in operator-controlled /
+  closed environments; **SHOULD NOT** routine public-Internet deployment;
+  viable interim step when an IPv4 outage is obligatory; public 6/6 drills
+  with notice remain **MAY**.
+- **Split-stack (§8.5):** container/cloud north-south vs east-west; edge soft
+  failure vs internal IPv4; multi-hop drills and metrics correlation.
+- **Terminology (§1.5):** soft/hard failure scoped per signaling hop, not
+  end-to-end.
+- **Measuring outage impact (§8.3):** interpret edge metrics with origin/downstream
+  health; split-stack pitfall table.
+- **Scope (§1.2):** CNI/prefix delegation out of scope; internal HTTP gateways
+  **MAY** use same signaling.
+- **Technical motivation (§1.4):** asymmetric dual-stack and internal HTTP
+  entry points.
+- **CDN/proxy (§8.4):** internal gateway variant; **Deployment models (§10):**
+  client-to-signaling-entity limitation.
+- **Examples (§13.4):** ingress soft failure with internal IPv4 dependency.
+- **Abstract:** intended deployment audience; enterprise/internal focus; no
+  section references (idnits).
 - **README / CHANGELOG:** note that `-00` is submitted and link to IETF Datatracker.
 - **Submission hygiene:** Unicode em/en dashes replaced with ASCII (`---`, `-`)
   for Datatracker XML checks.

@@ -15,8 +15,11 @@ fields that signal an intentional, often time-bounded IPv4 outage, instruct
 aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
-logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+logs. The mechanism supports staged enterprise rollouts, internal HTTP services,
+and permanent IPv6-only migration; coordinated public events (for example, 6/6
+drills) remain possible with advance notice. The primary intended deployment is
+operator-controlled environments where provider and users share operational
+responsibility. Legacy clients that do not implement this specification treat an unrecognized
  566  status code as an internal server error and MAY use the response body for
 human-readable guidance. 
     " name="description">
@@ -27,10 +30,10 @@ human-readable guidance.
 <meta content="retry" name="keyword">
 <meta content="dual-stack" name="keyword">
 <meta content="Happy Eyeballs" name="keyword">
-<meta content="draft-martin-retry-over-ipv6-00" name="ietf.draft">
+<meta content="draft-martin-retry-over-ipv6-01" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.33.0
-    Python 3.12.13
+    Python 3.14.5
     ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
     intervaltree 3.2.1
@@ -42,7 +45,7 @@ human-readable guidance.
     requests 2.34.2
     wcwidth 0.7.0
 -->
-<link href="draft-martin-retry-over-ipv6-00.xml" rel="alternate" type="application/rfc+xml">
+<link href="draft-martin-retry-over-ipv6-01.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
 <style type="text/css">/*
 
@@ -1235,7 +1238,7 @@ li > p:last-of-type:only-child {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Martin</td>
-<td class="center">Expires 8 December 2026</td>
+<td class="center">Expires 13 December 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1245,15 +1248,15 @@ li > p:last-of-type:only-child {
 <dt class="label-workgroup">Workgroup:</dt>
 <dd class="workgroup">HTTP Working Group</dd>
 <dt class="label-internet-draft">Internet-Draft:</dt>
-<dd class="internet-draft">draft-martin-retry-over-ipv6-00</dd>
+<dd class="internet-draft">draft-martin-retry-over-ipv6-01</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-06-06" class="published">6 June 2026</time>
+<time datetime="2026-06-11" class="published">11 June 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-12-08">8 December 2026</time></dd>
+<dd class="expires"><time datetime="2026-12-13">13 December 2026</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1274,8 +1277,11 @@ fields that signal an intentional, often time-bounded IPv4 outage, instruct
 aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
 so operators can distinguish soft failures from hard failures in centralized
-logs. The mechanism supports coordinated events (for example, 6/6 IPv6 Day
-drills), staged enterprise rollouts, and permanent IPv6-only migration. Legacy clients that do not implement this specification treat an unrecognized
+logs. The mechanism supports staged enterprise rollouts, internal HTTP services,
+and permanent IPv6-only migration; coordinated public events (for example, 6/6
+drills) remain possible with advance notice. The primary intended deployment is
+operator-controlled environments where provider and users share operational
+responsibility. Legacy clients that do not implement this specification treat an unrecognized
 <code>566</code> status code as an internal server error and MAY use the response body for
 human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
@@ -1298,7 +1304,7 @@ human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 8 December 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 13 December 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1337,13 +1343,16 @@ human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-scope" class="internal xref">Scope</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.3">
-                <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-technical-motivation" class="internal xref">Technical Motivation</a></p>
+                <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-intended-deployment" class="internal xref">Intended Deployment</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.4">
-                <p id="section-toc.1-1.1.2.4.1"><a href="#section-1.4" class="auto internal xref">1.4</a>.  <a href="#name-requirements-language" class="internal xref">Requirements Language</a></p>
+                <p id="section-toc.1-1.1.2.4.1"><a href="#section-1.4" class="auto internal xref">1.4</a>.  <a href="#name-technical-motivation" class="internal xref">Technical Motivation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.5">
-                <p id="section-toc.1-1.1.2.5.1"><a href="#section-1.5" class="auto internal xref">1.5</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
+                <p id="section-toc.1-1.1.2.5.1"><a href="#section-1.5" class="auto internal xref">1.5</a>.  <a href="#name-requirements-language" class="internal xref">Requirements Language</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.6">
+                <p id="section-toc.1-1.1.2.6.1"><a href="#section-1.6" class="auto internal xref">1.6</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
 </li>
             </ul>
 </li>
@@ -1475,10 +1484,13 @@ human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-cdn-and-reverse-proxy-deplo" class="internal xref">CDN and Reverse Proxy Deployment</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5">
-                <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-token-generation" class="internal xref">Token Generation</a></p>
+                <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-split-stack-and-multi-hop-d" class="internal xref">Split-Stack and Multi-Hop Deployments</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.6">
-                <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-transitional-fallback" class="internal xref">Transitional Fallback</a></p>
+                <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-token-generation" class="internal xref">Token Generation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.7">
+                <p id="section-toc.1-1.8.2.7.1"><a href="#section-8.7" class="auto internal xref">8.7</a>.  <a href="#name-transitional-fallback" class="internal xref">Transitional Fallback</a></p>
 </li>
             </ul>
 </li>
@@ -1521,6 +1533,9 @@ human-readable guidance.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3">
                 <p id="section-toc.1-1.13.2.3.1"><a href="#section-13.3" class="auto internal xref">13.3</a>.  <a href="#name-cross-backend-recovery" class="internal xref">Cross-Backend Recovery</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
+                <p id="section-toc.1-1.13.2.4.1"><a href="#section-13.4" class="auto internal xref">13.4</a>.  <a href="#name-ingress-soft-failure-with-i" class="internal xref">Ingress Soft Failure with Internal IPv4 Dependency</a></p>
 </li>
             </ul>
 </li>
@@ -1565,12 +1580,24 @@ throughout the week, and IPv4 on the main meeting network was disabled for
 roughly one hour during the Wednesday plenary on 12 March 2008 so attendees
 could use IPv6-only Internet access and surface client stacks, applications,
 and services that still depended on IPv4 <span>[<a href="#IETF71-IPV4-OUTAGE" class="cite xref">IETF71-IPV4-OUTAGE</a>]</span>.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
-<p id="section-1.1-3">Governments are also publishing fixed IPv4 end dates. For example, the Czech
-Republic approved a plan for state administration services to stop providing
-IPv4 on <strong>6 June 2032</strong> (6/6/2032) <span>[<a href="#KONEC-IPV4-CZ" class="cite xref">KONEC-IPV4-CZ</a>]</span>. Operators facing such
-deadlines need staged transition mechanisms --- including time-bounded planned
-outages, clear user messaging, and measurable HTTP-layer signals --- long before
-the final cutover date.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">Governments are publishing IPv6 transition policies with varying specificity.
+The Czech Republic approved a plan for state administration services to stop
+providing IPv4 on <strong>6 June 2032</strong> (6/6/2032) <span>[<a href="#KONEC-IPV4-CZ" class="cite xref">KONEC-IPV4-CZ</a>]</span> --- one of the
+few published fixed IPv4 end dates. Other governments set phased milestones or
+adoption requirements rather than a single shutdown date. The United States
+Office of Management and Budget Memorandum M-21-07 <span>[<a href="#OMB-M-21-07" class="cite xref">OMB-M-21-07</a>]</span> requires
+federal agencies to operate at least 20%, 50%, and 80% of IP-enabled assets in
+IPv6-only environments by the end of fiscal years 2023, 2024, and 2025
+respectively, with strategic intent to phase out IPv4. The Netherlands places
+IPv6 on the mandatory "use-or-explain" list for public-sector procurement
+<span>[<a href="#NL-FS-IPV6" class="cite xref">NL-FS-IPV6</a>]</span>. Washington State policy EA-04 <span>[<a href="#WA-EA-04" class="cite xref">WA-EA-04</a>]</span> requires state
+agencies to migrate infrastructure and applications to IPv6 as IPv4 becomes
+unsupported. Such mandates are frequently declared yet only partially met; a
+contributing factor may be the absence of standardized, reversible transition
+mechanisms at the application layer, which this document aims to address.
+Operators facing such deadlines need staged transition mechanisms
+--- including time-bounded planned outages, clear user messaging, and measurable
+HTTP-layer signals --- long before the final cutover date.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
 <p id="section-1.1-4">Network-layer IPv4 removal is a poor fit for staged drills:<a href="#section-1.1-4" class="pilcrow">¶</a></p>
 <ul class="compact">
 <li class="compact" id="section-1.1-5.1">Rollback is hard --- routing, ACL, and DNS changes propagate slowly and are
@@ -1615,70 +1642,115 @@ estimate soft versus hard failure rates.<a href="#section-1.1-7.4" class="pilcro
 <p id="section-1.2-1">HTTP is not the only application protocol on the Internet. This document
 addresses HTTP first because it is widely deployed, visible to end users (for
 example in browsers), and pervasive in enterprise environments for web
-applications, APIs, and microservices behind load balancers. Other protocols
-might adopt analogous techniques for planned IPv4 outages; defining those
-signals is out of scope for this document.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
-<p id="section-1.2-2">This specification is HTTP-version-agnostic: the status code, header fields, and
+applications, APIs, and microservices behind load balancers. Container
+networking, prefix delegation, and CNI configuration are out of scope; this
+document defines HTTP signaling only on paths where it is deployed. Operators
+<span class="bcp14">MAY</span> apply the same signaling on internal HTTP load balancers, API gateways,
+or service-mesh ingress when IPv4 is intentionally unavailable on that hop.
+Other protocols might adopt analogous techniques for planned IPv4 outages;
+defining those signals is out of scope for this document.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="intended-deployment">
+<section id="section-1.3">
+        <h3 id="name-intended-deployment">
+<a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-intended-deployment" class="section-name selfRef">Intended Deployment</a>
+        </h3>
+<p id="section-1.3-1">Operators <span class="bcp14">SHOULD NOT</span> deploy planned IPv4 outages with <code>566</code> signaling on the
+open Internet as a routine IPv6 migration technique. Public use can annoy users:
+legacy clients treat an unrecognized <code>566</code> as <code>500 Internal Server Error</code>, aware
+clients must close the IPv4 connection and retry, and users on IPv4-only paths
+see an error even when the service remains available over IPv6 on other paths.
+Unannounced or frequent public drills risk support load and reputational harm.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<p id="section-1.3-2">When an operator is <strong>obliged</strong> to run a planned IPv4 outage --- for example, a
+fixed government cutover deadline, a coordinated industry drill with advance
+notice, or an irreversible network-layer change --- HTTP-layer signaling is a
+viable <strong>interim</strong> step compared with silent timeouts or DNS-only withdrawal: it
+is reversible, measurable, and gives aware clients an explicit retry path.<a href="#section-1.3-2" class="pilcrow">¶</a></p>
+<p id="section-1.3-3">This mechanism is <strong>primarily intended</strong> for <strong>closed or operator-controlled
+environments</strong> where the service provider and the user population are the same
+entity or share operational responsibility --- for example, enterprise
+intranets, government administration networks, internal API gateways, staging
+environments, and microservice deployments where clients are operated by the
+same organization. In those settings, operators can deploy aware clients,
+communicate maintenance windows, and interpret soft versus hard failure metrics
+without imposing unexplained errors on unrelated Internet users.<a href="#section-1.3-3" class="pilcrow">¶</a></p>
+<p id="section-1.3-4">Public Internet use <span class="bcp14">MAY</span> remain appropriate for time-bounded, widely
+communicated events (for example, 6/6 drills) when advance user communication is
+proportional to expected impact.<a href="#section-1.3-4" class="pilcrow">¶</a></p>
+<p id="section-1.3-5">This specification is HTTP-version-agnostic: the status code, header fields, and
 client behavior apply equally to HTTP/1.1 <span>[<a href="#RFC9112" class="cite xref">RFC9112</a>]</span>, HTTP/2 <span>[<a href="#RFC9113" class="cite xref">RFC9113</a>]</span>, and
 HTTP/3 <span>[<a href="#RFC9114" class="cite xref">RFC9114</a>]</span>, as they are defined in terms of HTTP semantics
 <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>. Wire-format examples use HTTP/1.1 message syntax for readability.
 Implementations MUST determine whether a request was received over IPv4 at the
 transport layer (TCP for HTTP/1.1 and HTTP/2, QUIC for HTTP/3), not from the
-HTTP version alone.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
+HTTP version alone.<a href="#section-1.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="technical-motivation">
-<section id="section-1.3">
+<section id="section-1.4">
         <h3 id="name-technical-motivation">
-<a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-technical-motivation" class="section-name selfRef">Technical Motivation</a>
+<a href="#section-1.4" class="section-number selfRef">1.4. </a><a href="#name-technical-motivation" class="section-name selfRef">Technical Motivation</a>
         </h3>
-<p id="section-1.3-1">Many operators plan to remove or disable IPv4 while retaining IPv6 service.
+<p id="section-1.4-1">Some operators plan to remove or disable IPv4 while retaining IPv6 service.
 During migration, maintenance, or decommissioning, a client that connects over
 IPv4 may observe connection failures or HTTP errors even though the same origin
-remains available over IPv6.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
-<p id="section-1.3-2">IPv4-only clients cannot switch address families; they need a clear, loggable
+remains available over IPv6.<a href="#section-1.4-1" class="pilcrow">¶</a></p>
+<p id="section-1.4-2">IPv4-only clients cannot switch address families; they need a clear, loggable
 explanation that the service no longer supports IPv4 (optionally until a stated
 time). Dual-stack clients on networks where Happy Eyeballs <span>[<a href="#RFC8305" class="cite xref">RFC8305</a>]</span> selects
 IPv4 may treat the failure as a general outage unless the server explicitly
-signals that IPv4 is intentionally unavailable and IPv6 should be used instead.<a href="#section-1.3-2" class="pilcrow">¶</a></p>
-<p id="section-1.3-3">Application-to-application traffic carried over HTTP (for example REST-style
+signals that IPv4 is intentionally unavailable and IPv6 should be used instead.<a href="#section-1.4-2" class="pilcrow">¶</a></p>
+<p id="section-1.4-3">Application-to-application traffic carried over HTTP (for example REST-style
 APIs, gRPC, GraphQL, or JSON-RPC) benefits from a machine-readable signal
 distinct from connectivity failures on other addresses. For example, a gRPC
 client that tries multiple
 resolved addresses may surface an error from the first failing attempt, masking
-the fact that the meaningful signal was returned on an IPv4 connection.<a href="#section-1.3-3" class="pilcrow">¶</a></p>
+the fact that the meaningful signal was returned on an IPv4 connection.<a href="#section-1.4-3" class="pilcrow">¶</a></p>
+<p id="section-1.4-4">HTTP APIs behind ingress are a common place to <strong>start</strong> IPv6 transition drills,
+especially in operator-controlled environments (see <a href="#intended-deployment" class="auto internal xref">Section 1.3</a>).
+Some application architectures exhibit <strong>asymmetric dual-stack</strong>: dual-stack or
+IPv6-capable <strong>north-south</strong> paths (clients to ingress) alongside IPv4-only
+<strong>east-west</strong> paths (ingress to pods, service-to-service calls, or background
+workers). Planned IPv4 outages at the HTTP layer help find client and partner
+dependencies; they may <strong>miss</strong> internal-only IPv4 unless the same policy is
+also applied on internal HTTP entry points (see <a href="#split-stack-deployments" class="auto internal xref">Section 8.5</a>).<a href="#section-1.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="requirements-language">
-<section id="section-1.4">
+<section id="section-1.5">
         <h3 id="name-requirements-language">
-<a href="#section-1.4" class="section-number selfRef">1.4. </a><a href="#name-requirements-language" class="section-name selfRef">Requirements Language</a>
+<a href="#section-1.5" class="section-number selfRef">1.5. </a><a href="#name-requirements-language" class="section-name selfRef">Requirements Language</a>
         </h3>
-<p id="section-1.4-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>",
+<p id="section-1.5-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>",
 "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>",
 "<span class="bcp14">NOT RECOMMENDED</span>", "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be
 interpreted as described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when,
-they appear in all capitals, as shown here.<a href="#section-1.4-1" class="pilcrow">¶</a></p>
+they appear in all capitals, as shown here.<a href="#section-1.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="terminology">
-<section id="section-1.5">
+<section id="section-1.6">
         <h3 id="name-terminology">
-<a href="#section-1.5" class="section-number selfRef">1.5. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
+<a href="#section-1.6" class="section-number selfRef">1.6. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
         </h3>
-<p id="section-1.5-1">This document uses terms from <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>. Additional terms:<a href="#section-1.5-1" class="pilcrow">¶</a></p>
-<p id="section-1.5-2"><strong>Authority</strong>: The host and port derived from the target URI.<a href="#section-1.5-2" class="pilcrow">¶</a></p>
-<p id="section-1.5-3"><strong>Planned IPv4 outage</strong>: An operator-initiated period during which IPv4 HTTP
+<p id="section-1.6-1">This document uses terms from <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>. Additional terms:<a href="#section-1.6-1" class="pilcrow">¶</a></p>
+<p id="section-1.6-2"><strong>Authority</strong>: The host and port derived from the target URI.<a href="#section-1.6-2" class="pilcrow">¶</a></p>
+<p id="section-1.6-3"><strong>Planned IPv4 outage</strong>: An operator-initiated period during which IPv4 HTTP
 service for an authority is intentionally unavailable while IPv6 service is
-expected to remain available.<a href="#section-1.5-3" class="pilcrow">¶</a></p>
-<p id="section-1.5-4"><strong>Aware client</strong>: A client implementation that supports the mechanisms defined
-in this document.<a href="#section-1.5-4" class="pilcrow">¶</a></p>
-<p id="section-1.5-5"><strong>Legacy client</strong>: A client that does not implement this document.<a href="#section-1.5-5" class="pilcrow">¶</a></p>
-<p id="section-1.5-6"><strong>Soft failure</strong>: A client receives <code>566</code> (or transitional <code>503</code> with
+expected to remain available.<a href="#section-1.6-3" class="pilcrow">¶</a></p>
+<p id="section-1.6-4"><strong>Aware client</strong>: A client implementation that supports the mechanisms defined
+in this document.<a href="#section-1.6-4" class="pilcrow">¶</a></p>
+<p id="section-1.6-5"><strong>Legacy client</strong>: A client that does not implement this document.<a href="#section-1.6-5" class="pilcrow">¶</a></p>
+<p id="section-1.6-6"><strong>Soft failure</strong>: A client receives <code>566</code> (or transitional <code>503</code> with
 <code>Retry-Over-IPv6</code>) over IPv4 and subsequently completes the same request
-successfully over IPv6.<a href="#section-1.5-6" class="pilcrow">¶</a></p>
-<p id="section-1.5-7"><strong>Hard failure</strong>: A client receives <code>566</code> over IPv4 but cannot successfully
-complete the request over IPv6.<a href="#section-1.5-7" class="pilcrow">¶</a></p>
+successfully over IPv6. Soft and hard failure classification is <strong>per aware
+client and per signaling hop</strong> (the entity that returned <code>566</code>), not
+end-to-end application success. A soft failure does not guarantee that
+downstream processing (for example, origin work reached over an IPv4-only pod
+network) succeeded.<a href="#section-1.6-6" class="pilcrow">¶</a></p>
+<p id="section-1.6-7"><strong>Hard failure</strong>: A client receives <code>566</code> over IPv4 but cannot successfully
+complete the request over IPv6.<a href="#section-1.6-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2283,7 +2355,8 @@ outage while loopback remains available for local health checks, monitoring, and
 administration; those clients do not need a signal to retry over IPv6.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
 <p id="section-8.1-4">Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
-permanent IPv6-only service.<a href="#section-8.1-4" class="pilcrow">¶</a></p>
+permanent IPv6-only service. Operators on the open Internet <span class="bcp14">SHOULD</span> follow
+<a href="#intended-deployment" class="auto internal xref">Section 1.3</a> before enabling <code>566</code> policy.<a href="#section-8.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="idempotent-methods">
@@ -2367,8 +2440,27 @@ backends:<a href="#section-8.3-1" class="pilcrow">¶</a></p>
         </table>
 <p id="section-8.3-3">Hard-failure counts are estimates: clients with no IPv6 path cannot send
 recovery signals in-band.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
-<p id="section-8.3-4">The responding entity SHOULD log recovery headers but MUST NOT alter the
-response based on them.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
+<p id="section-8.3-4">Interpreting metrics during a drill:<a href="#section-8.3-4" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-8.3-5.1">
+            <strong>High soft-failure rate with low user-visible errors</strong> --- client path to the
+signaling entity is likely OK; a good result <strong>at that hop</strong>.<a href="#section-8.3-5.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-8.3-5.2">
+            <strong>High soft-failure rate with elevated origin 5xx or latency</strong> --- possible
+<strong>split-stack</strong> deployment: clients reached IPv6 at the edge while backends or
+internal hops still depend on IPv4 (see <a href="#split-stack-deployments" class="auto internal xref">Section 8.5</a>).<a href="#section-8.3-5.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-8.3-5.3">
+            <strong>Low recovery relative to <code>566</code> count</strong> --- hard failures, legacy clients, or
+clients without an IPv6 path.<a href="#section-8.3-5.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-8.3-6">Operators <span class="bcp14">SHOULD</span> correlate edge <code>566</code> and recovery metrics with <strong>origin,
+worker, and downstream dependency</strong> health during an outage window, not rely on
+edge metrics alone.<a href="#section-8.3-6" class="pilcrow">¶</a></p>
+<p id="section-8.3-7">The responding entity SHOULD log recovery headers but MUST NOT alter the
+response based on them.<a href="#section-8.3-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="cdn-and-reverse-proxy-deployment">
@@ -2380,25 +2472,54 @@ response based on them.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
 <strong>edge</strong> sends <code>566</code> to the client when IPv4 to the edge is disabled --- not
 necessarily the origin application. The entity that generates <code>566</code> MUST know
 the client-facing address family.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
+<p id="section-8.4-2">When ingress <strong>terminates IPv6</strong> from clients but uses <strong>IPv4 toward
+origin servers or pods</strong>, disabling IPv4 <strong>to the edge</strong> exercises client paths;
+disabling IPv4 on an <strong>internal HTTP gateway</strong> (ingress-to-origin, API gateway,
+or service-mesh ingress) exercises <strong>service-to-service</strong> HTTP that still uses
+operator-controlled hostnames. The same <code>566</code> semantics apply on each hop where
+IPv4 is intentionally unavailable.<a href="#section-8.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="split-stack-deployments">
+<section id="section-8.5">
+        <h3 id="name-split-stack-and-multi-hop-d">
+<a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-split-stack-and-multi-hop-d" class="section-name selfRef">Split-Stack and Multi-Hop Deployments</a>
+        </h3>
+<p id="section-8.5-1">In some container and cloud deployments, <strong>public ingress</strong> is dual-stack while
+<strong>pod or cluster networks remain IPv4-only</strong> (or use IPv6 only for ULA or
+translation, not for the paths clients use). Platform IPv6 inside the cluster
+often lags public dual-stack at the edge.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
+<p id="section-8.5-2"><code>566</code> is emitted based on the <strong>client-facing transport</strong> at the responding
+entity (see <a href="#when-to-send-566" class="auto internal xref">Section 8.1</a>). It does <strong>not</strong> probe east-west paths,
+sidecars, background workers, or callbacks that use cluster-internal IPv4 names
+or addresses.<a href="#section-8.5-2" class="pilcrow">¶</a></p>
+<p id="section-8.5-3">A drill can therefore show <strong>high soft-failure rates</strong> (the client retried over
+IPv6 and received success from the load balancer) while <strong>internal HTTP</strong> still
+depends on IPv4 and fails or degrades downstream.<a href="#section-8.5-3" class="pilcrow">¶</a></p>
+<p id="section-8.5-4">Operators <span class="bcp14">SHOULD</span> treat edge-only drills as <strong>necessary but not sufficient</strong>
+for IPv6-only readiness. Operators <span class="bcp14">SHOULD</span> extend staged outages to <strong>internal
+HTTP gateways</strong> where policy applies and <span class="bcp14">SHOULD</span> correlate edge <code>566</code> and
+recovery metrics with origin and downstream error rates during the window, as
+described in <a href="#measuring-outage-impact" class="auto internal xref">Section 8.3</a>.<a href="#section-8.5-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="token-generation">
-<section id="section-8.5">
+<section id="section-8.6">
         <h3 id="name-token-generation">
-<a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-token-generation" class="section-name selfRef">Token Generation</a>
+<a href="#section-8.6" class="section-number selfRef">8.6. </a><a href="#name-token-generation" class="section-name selfRef">Token Generation</a>
         </h3>
-<p id="section-8.5-1">Token format and validation are deployment-specific. Tokens SHOULD be
-unguessable, short-lived, and loggable without affinity to the issuing server.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
+<p id="section-8.6-1">Token format and validation are deployment-specific. Tokens SHOULD be
+unguessable, short-lived, and loggable without affinity to the issuing server.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transitional-fallback">
-<section id="section-8.6">
+<section id="section-8.7">
         <h3 id="name-transitional-fallback">
-<a href="#section-8.6" class="section-number selfRef">8.6. </a><a href="#name-transitional-fallback" class="section-name selfRef">Transitional Fallback</a>
+<a href="#section-8.7" class="section-number selfRef">8.7. </a><a href="#name-transitional-fallback" class="section-name selfRef">Transitional Fallback</a>
         </h3>
-<p id="section-8.6-1">Deployments that cannot emit <code>566</code> MAY use <code>503 Service Unavailable</code> with
+<p id="section-8.7-1">Deployments that cannot emit <code>566</code> MAY use <code>503 Service Unavailable</code> with
 <code>Retry-Over-IPv6: ?1</code> and <code>IPv4-Unavailable-Until</code> until <code>566</code> support is
-available.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
+available.<a href="#section-8.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2497,12 +2618,14 @@ not blindly retry the same address list.<a href="#section-9.2-3" class="pilcrow"
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">HTTP 566 + headers (this document)</td>
-            <td class="text-left" rowspan="1" colspan="1">Reversible at LB; structured retry; measurable soft/hard fail</td>
+            <td class="text-left" rowspan="1" colspan="1">Reversible at LB; structured retry; measurable soft/hard fail; measures client-to-signaling-entity path only</td>
           </tr>
         </tbody>
       </table>
 <p id="section-10-3">HTTP-layer signaling complements DNS and network changes, especially when A
-records remain or when the client already connected over IPv4.<a href="#section-10-3" class="pilcrow">¶</a></p>
+records remain or when the client already connected over IPv4. Internal
+back-end address families and east-west paths require separate drills or
+metrics (see <a href="#split-stack-deployments" class="auto internal xref">Section 8.5</a>).<a href="#section-10-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-considerations">
@@ -2689,6 +2812,29 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 <p id="section-13.3-5">An edge log pipeline joins both events on <code>token=abc123</code>.<a href="#section-13.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="ingress-soft-failure-with-internal-ipv4-dependency">
+<section id="section-13.4">
+        <h3 id="name-ingress-soft-failure-with-i">
+<a href="#section-13.4" class="section-number selfRef">13.4. </a><a href="#name-ingress-soft-failure-with-i" class="section-name selfRef">Ingress Soft Failure with Internal IPv4 Dependency</a>
+        </h3>
+<p id="section-13.4-1">This example is informative. It illustrates that <strong>edge soft failure does not
+imply stack-wide IPv6 readiness</strong> (see <a href="#split-stack-deployments" class="auto internal xref">Section 8.5</a>).<a href="#section-13.4-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="compact type-1" id="section-13.4-2">
+<li id="section-13.4-2.1">A dual-stack client connects to public ingress over IPv4 and receives <code>566</code>
+with <code>Retry-Over-IPv6: ?1</code>.<a href="#section-13.4-2.1" class="pilcrow">¶</a>
+</li>
+          <li id="section-13.4-2.2">The client retries over IPv6; ingress returns <code>200 OK</code> with
+<code>Retry-Over-IPv6-Recovery</code> --- a <strong>soft failure</strong> at the edge.<a href="#section-13.4-2.2" class="pilcrow">¶</a>
+</li>
+          <li id="section-13.4-2.3">Ingress forwards the request to a worker pod over cluster IPv4; the pod cannot
+reach a dependency that was only tested over internal IPv4, and the client
+eventually receives <code>502 Bad Gateway</code> or <code>504 Gateway Timeout</code>.<a href="#section-13.4-2.3" class="pilcrow">¶</a>
+</li>
+        </ol>
+<p id="section-13.4-3">Operators SHOULD not conclude IPv6-only migration is complete from edge recovery
+metrics alone when internal paths were not exercised.<a href="#section-13.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <section id="section-14">
@@ -2743,6 +2889,14 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
       <dd>
 <span class="refAuthor">CZ.NIC</span>, <span class="refTitle">"Konec IPv4 - Czech Republic IPv4 End Date"</span>, <span>&lt;<a href="https://konecipv4.cz/en/">https://konecipv4.cz/en/</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="NL-FS-IPV6">[NL-FS-IPV6]</dt>
+      <dd>
+<span class="refAuthor">Forum Standaardisatie</span>, <span class="refTitle">"Internet Protocol version 6 (IPv6)"</span>, <span>&lt;<a href="https://www.forumstandaardisatie.nl/open-standaarden/ipv6">https://www.forumstandaardisatie.nl/open-standaarden/ipv6</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="OMB-M-21-07">[OMB-M-21-07]</dt>
+      <dd>
+<span class="refAuthor">Office of Management and Budget</span>, <span class="refTitle">"Completing the Transition to Internet Protocol Version 6 (IPv6)"</span>, <time datetime="2020-11" class="refDate">November 2020</time>, <span>&lt;<a href="https://www.whitehouse.gov/wp-content/uploads/2020/11/M-21-07.pdf">https://www.whitehouse.gov/wp-content/uploads/2020/11/M-21-07.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC9111">[RFC9111]</dt>
       <dd>
 <span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Caching"</span>, <span class="seriesInfo">STD 98</span>, <span class="seriesInfo">RFC 9111</span>, <span class="seriesInfo">DOI 10.17487/RFC9111</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9111">https://www.rfc-editor.org/info/rfc9111</a>&gt;</span>. </dd>
@@ -2750,6 +2904,10 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 <dt id="RFC9457">[RFC9457]</dt>
       <dd>
 <span class="refAuthor">Nottingham, M.</span>, <span class="refAuthor">Wilde, E.</span>, and <span class="refAuthor">S. Dalal</span>, <span class="refTitle">"Problem Details for HTTP APIs"</span>, <span class="seriesInfo">RFC 9457</span>, <span class="seriesInfo">DOI 10.17487/RFC9457</span>, <time datetime="2023-07" class="refDate">July 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9457">https://www.rfc-editor.org/info/rfc9457</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WA-EA-04">[WA-EA-04]</dt>
+      <dd>
+<span class="refAuthor">Washington State Office of the Chief Information Officer</span>, <span class="refTitle">"Internet Protocol Version 6 (IPv6) Implementation Policy"</span>, <span>&lt;<a href="https://watech.wa.gov/policies/internet-protocol-version-6-ipv6-implementation-policy">https://watech.wa.gov/policies/internet-protocol-version-6-ipv6-implementation-policy</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="WORLD-IPV6-DAY">[WORLD-IPV6-DAY]</dt>
       <dd>

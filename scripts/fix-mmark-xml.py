@@ -13,6 +13,16 @@ import sys
 from pathlib import Path
 
 
+def fix_submission_type(text: str) -> str:
+    """Drop rfc submissionType when Datatracker has no stream for the draft.
+
+    idnits errors on -01+ submissions if submissionType is set but the prior
+    version on Datatracker has stream=null (common for individual I-Ds).
+    seriesInfo stream is unchanged.
+    """
+    return re.sub(r'(<rfc[^>]*)\s+submissionType="[^"]*"', r"\1", text, count=1)
+
+
 def fix_references_wrapper(text: str) -> str:
     open_tag = "<references><name>References</name>\n"
     if open_tag not in text:
@@ -36,7 +46,10 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit(f"usage: {sys.argv[0]} <draft.xml>")
     path = Path(sys.argv[1])
-    path.write_text(fix_references_wrapper(path.read_text(encoding="utf-8")), encoding="utf-8")
+    text = path.read_text(encoding="utf-8")
+    text = fix_submission_type(text)
+    text = fix_references_wrapper(text)
+    path.write_text(text, encoding="utf-8")
 
 
 if __name__ == "__main__":

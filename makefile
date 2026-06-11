@@ -1,5 +1,5 @@
 SOURCE = draft-martin-retry-over-ipv6.md
-VERSION = 00
+VERSION := $(shell grep -E '^value = "draft-martin-retry-over-ipv6-' $(SOURCE) | sed -n 's/.*-\([0-9][0-9]\)".*/\1/p')
 DRAFT = draft-martin-retry-over-ipv6-$(VERSION)
 
 GOPATH := $(shell go env GOPATH 2>/dev/null)
