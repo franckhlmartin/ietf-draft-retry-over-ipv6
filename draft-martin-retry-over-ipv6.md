@@ -6,11 +6,11 @@ area = "art"
 workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 
-date = 2026-06-11
+date = 2026-06-30
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-martin-retry-over-ipv6-01"
+value = "draft-martin-retry-over-ipv6-02"
 stream = "IETF"
 status = "standard"
 
@@ -287,6 +287,50 @@ World IPv6 Launch, and embeds **66** as a mnemonic for IPv6 within the 5xx
 server-error class. This mnemonic is for human operability only; protocol
 behavior does not depend on the numeric value beyond its 5xx class.
 
+### Why the 5xx Class
+
+Section 15.6 of [@!RFC9110] defines the 5xx (Server Error) class for cases where
+the server is aware that it has erred or is incapable of performing the requested
+method. A planned IPv4 outage is an operator or server policy decision: the
+request is valid, but the responding entity declines to serve it on the IPv4
+client-facing path while IPv6 remains available. That aligns with 5xx semantics
+and with the transitional `503 Service Unavailable` fallback defined in this
+document (see (#transitional-fallback)).
+
+Section 15.5 of [@!RFC9110] defines the 4xx (Client Error) class for cases where
+the client seems to have erred. A hypothetical `466` code in the unassigned
+432-499 range would embed the same 6/6 mnemonic in the 4xx class but would imply
+that the client could resolve the failure by correcting the request. IPv4-only
+clients cannot self-correct by switching address family; framing the outage as a
+client error is misleading for that audience.
+
+### Legacy Fallback
+
+HTTP status codes are extensible (Section 15 of [@!RFC9110]). Clients that do not
+implement this specification MUST understand the class of any status code and
+treat an unrecognized code as equivalent to the x00 code of that class. An
+unrecognized `566` is therefore treated as `500 Internal Server Error`; an
+unrecognized hypothetical `466` would be treated as `400 Bad Request`. Operators
+SHOULD include a response body (see (#response-body)) so human readers and
+generic clients see outage explanation rather than relying on the x00 fallback
+label alone.
+
+### Why Not an Existing 4xx Code
+
+`421 Misdirected Request` (Section 15.5.20 of [@!RFC9110]) is the closest
+registered precedent: it rejects a request when the connection context is
+inappropriate and allows the client to retry over a different connection.
+However, `421` is defined for HTTP origin routing and connection coalescing
+(Section 7.4 of [@!RFC9110]), not for intentional IPv4 path withdrawal during
+IPv6 migration. Reusing `421` risks confusion with existing HTTP/2 deployments
+and does not carry IPv6-specific signaling without the header fields defined
+here.
+
+Neither `466` nor `566` is heuristically cacheable (Section 15.1 of
+[@!RFC9110]). This document recommends `Cache-Control: private, no-store` for
+address-family-dependent responses (see (#security-considerations)); the choice
+of class does not materially change caching behavior.
+
 ## Example
 
 ~~~ http
@@ -525,6 +569,68 @@ Implications for this document:
 * An aware client that receives `566` only on IPv4 and has not yet succeeded
   over IPv6 MUST apply the IPv6 retry requirements in (#ipv6-retry); that
   behavior is an HTTP-layer extension beyond [@!RFC8305].
+
+#### Happy Eyeballs Specification Versions
+
+All published Happy Eyeballs specifications operate at connection establishment
+only. [@!RFC6555] defined the original dual-stack racing algorithm; [@!RFC8305]
+obsoletes it with parallel `A` and `AAAA` queries, address interleaving, a
+Connection Attempt Delay (recommended 250 ms), and caching of the successful
+address family (Section 5.2). Work on a Version 3 algorithm adds SVCB/HTTPS
+resource records and QUIC/TCP interleaving ([@?HEV3]) but still does not define
+HTTP status handling. None of these specifications treats an HTTP 4xx or 5xx
+response on one established connection as failure for other parallel connection
+attempts (Section 9.2 of [@!RFC8305]).
+
+Typical outcomes when IPv4 returns `566` during a Happy Eyeballs race:
+
+* IPv6 delivers a successful HTTP response first --- the IPv4 attempt may be
+  cancelled before `566` is received; no recovery signal is needed.
+* IPv4 wins the transport race and returns `566` before IPv6 connects --- other
+  attempts are likely already cancelled; an aware client MUST still apply
+  (#ipv6-retry).
+* Both connections are up --- completion order at the HTTP layer determines
+  whether a late IPv4 `566` requires further action (see above).
+
+The numeric choice between a hypothetical `466` (4xx) and `566` (5xx) does not
+change Happy Eyeballs behavior, because connection racing does not inspect HTTP
+status codes.
+
+#### Common Client Stack Behavior
+
+This subsection is informative. Major HTTP clients do not automatically retry
+over IPv6 on `566`, `503` with `Retry-Over-IPv6`, or unknown 4xx/5xx codes
+unless they implement this specification or application-specific logic.
+
+**Web browsers.** Chromium and Firefox implement Happy Eyeballs ([@!RFC8305] or
+successor algorithms) at the transport layer: the first successful TCP/TLS or
+QUIC handshake cancels other in-flight attempts. Neither browser automatically
+resends a request over the other address family because of an HTTP `566` or
+`503` response. Chromium does automatically resend in some other cases (for
+example `421 Misdirected Request`, certain connection errors on reused sockets,
+and limited HTTP/2 or QUIC protocol retries); those paths are unrelated to
+IPv4-unavailability signaling.
+
+**gRPC.** Name resolution and load balancing (for example `pick_first` or
+`round_robin`) select among resolved addresses at connect time. Default gRPC
+retry behavior covers only uncommitted transparent retries; configured retry
+policies typically list `UNAVAILABLE` as a retryable code
+([@?GRPC-HTTP-MAPPING]). That mapping lists `503 Service Unavailable` (and
+selected gateway and overload responses) as `UNAVAILABLE` but maps unknown
+status codes to `UNKNOWN`. gRPC implementations that support this document
+SHOULD map `566` to `UNAVAILABLE` (see (#grpc-and-other-http-apis)) and honor
+`Retry-Over-IPv6` before treating multi-address errors as hard failures.
+
+**Rest.li and similar HTTP API frameworks.** Client-side retry in Rest.li-style
+deployments is oriented toward failover to a different host in a cluster (for
+example after `503 Service Unavailable` from overload detection), not toward
+switching address family on the same hostname. Arbitrary 4xx or 5xx responses
+surface as application errors unless the framework or operator configures
+explicit retry rules.
+
+Because none of these stacks substitutes for the IPv6 retry behavior in
+(#ipv6-retry), operators deploying planned IPv4 outages SHOULD NOT assume that
+Happy Eyeballs or generic HTTP client libraries will recover automatically.
 
 Operators interpreting `566` and recovery metrics during planned outages SHOULD
 account for Happy Eyeballs transport racing and for the fact that HTTP status
@@ -790,7 +896,7 @@ described in (#measuring-outage-impact).
 Token format and validation are deployment-specific. Tokens SHOULD be
 unguessable, short-lived, and loggable without affinity to the issuing server.
 
-## Transitional Fallback
+## Transitional Fallback {#transitional-fallback}
 
 Deployments that cannot emit `566` MAY use `503 Service Unavailable` with
 `Retry-Over-IPv6: ?1` and `IPv4-Unavailable-Until` until `566` support is
@@ -827,12 +933,17 @@ connection still need to evaluate `566` and `Retry-Over-IPv6` before treating th
 request as a general failure. Operators SHOULD configure load balancers and
 origins to emit the same signaling on all HTTP versions they expose.
 
-## gRPC and Other HTTP APIs
+## gRPC and Other HTTP APIs {#grpc-and-other-http-apis}
 
-gRPC maps HTTP `566` to `UNAVAILABLE`, the same as `503`. gRPC implementations
-SHOULD inspect `Retry-Over-IPv6` on the HTTP response before aggregating
-multi-address connection errors, so that an IPv4 policy signal is not confused
-with IPv6 connectivity failure.
+gRPC over HTTP maps response status codes to RPC status when the `grpc-status`
+header is absent ([@?GRPC-HTTP-MAPPING]). That table maps `503 Service
+Unavailable` (and selected gateway timeouts and overload responses) to
+`UNAVAILABLE`; it maps `400 Bad Request` to `INTERNAL` and assigns `UNKNOWN`
+to most other codes, including unregistered 5xx values. Implementations that
+support this document SHOULD map HTTP `566` to `UNAVAILABLE`, the same as
+`503`, and SHOULD inspect `Retry-Over-IPv6` on the HTTP response before
+aggregating multi-address connection errors, so that an IPv4 policy signal is
+not confused with IPv6 connectivity failure.
 
 Suggested error text for logs: "IPv4 unavailable until \<date\>; retry over
 IPv6."
@@ -857,7 +968,7 @@ records remain or when the client already connected over IPv4. Internal
 back-end address families and east-west paths require separate drills or
 metrics (see (#split-stack-deployments)).
 
-# Security Considerations
+# Security Considerations {#security-considerations}
 
 An attacker who can inject or modify HTTP responses could attempt to influence
 client connection behavior by adding `Retry-Over-IPv6` or related header
@@ -1053,6 +1164,28 @@ metrics alone when internal paths were not exercised.
     <author>
       <organization>Washington State Office of the Chief Information Officer</organization>
     </author>
+  </front>
+</reference>
+
+<reference anchor="GRPC-HTTP-MAPPING" target="https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md">
+  <front>
+    <title>HTTP to gRPC Status Code Mapping</title>
+    <author>
+      <organization>gRPC Authors</organization>
+    </author>
+  </front>
+</reference>
+
+<reference anchor="HEV3" target="https://datatracker.ietf.org/doc/html/draft-pauly-happy-happyeyeballs-v3-00">
+  <front>
+    <title>Happy Eyeballs Version 3: Better Connectivity Using Concurrency and Protocol Negotiation</title>
+    <author initials="T." surname="Pauly" fullname="Tommy Pauly">
+      <organization>Apple Inc.</organization>
+    </author>
+    <author initials="D." surname="Schinazi" fullname="David Schinazi">
+      <organization>Apple Inc.</organization>
+    </author>
+    <date year="2024"/>
   </front>
 </reference>
 

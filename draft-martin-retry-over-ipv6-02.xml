@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- name="GENERATOR" content="github.com/mmarkdown/mmark Mmark Markdown Processor - mmark.miek.nl" -->
-<rfc version="3" ipr="trust200902" docName="draft-martin-retry-over-ipv6-01" category="std" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" indexInclude="true">
+<rfc version="3" ipr="trust200902" docName="draft-martin-retry-over-ipv6-02" category="std" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" indexInclude="true">
 
 <front>
-<title abbrev="retry-over-ipv6">HTTP Signaling of Planned IPv4 Unavailability</title><seriesInfo value="draft-martin-retry-over-ipv6-01" stream="IETF" status="standard" name="Internet-Draft"></seriesInfo>
+<title abbrev="retry-over-ipv6">HTTP Signaling of Planned IPv4 Unavailability</title><seriesInfo value="draft-martin-retry-over-ipv6-02" stream="IETF" status="standard" name="Internet-Draft"></seriesInfo>
 <author initials="F." surname="Martin" fullname="Franck Martin"><organization>Peachymango.org</organization><address><postal><street></street>
 </postal><email>franck@peachymango.org</email>
-</address></author><date year="2026" month="June" day="11"></date>
+</address></author><date year="2026" month="June" day="30"></date>
 <area>art</area>
 <workgroup>HTTP Working Group</workgroup>
 <keyword>IPv6</keyword>
@@ -263,6 +263,48 @@ and <tt>Retry-Over-IPv6-Token</tt>.</t>
 World IPv6 Launch, and embeds <strong>66</strong> as a mnemonic for IPv6 within the 5xx
 server-error class. This mnemonic is for human operability only; protocol
 behavior does not depend on the numeric value beyond its 5xx class.</t>
+
+<section anchor="why-the-5xx-class"><name>Why the 5xx Class</name>
+<t>Section 15.6 of <xref target="RFC9110"></xref> defines the 5xx (Server Error) class for cases where
+the server is aware that it has erred or is incapable of performing the requested
+method. A planned IPv4 outage is an operator or server policy decision: the
+request is valid, but the responding entity declines to serve it on the IPv4
+client-facing path while IPv6 remains available. That aligns with 5xx semantics
+and with the transitional <tt>503 Service Unavailable</tt> fallback defined in this
+document (see <xref target="transitional-fallback"></xref>).</t>
+<t>Section 15.5 of <xref target="RFC9110"></xref> defines the 4xx (Client Error) class for cases where
+the client seems to have erred. A hypothetical <tt>466</tt> code in the unassigned
+432-499 range would embed the same 6/6 mnemonic in the 4xx class but would imply
+that the client could resolve the failure by correcting the request. IPv4-only
+clients cannot self-correct by switching address family; framing the outage as a
+client error is misleading for that audience.</t>
+</section>
+
+<section anchor="legacy-fallback"><name>Legacy Fallback</name>
+<t>HTTP status codes are extensible (Section 15 of <xref target="RFC9110"></xref>). Clients that do not
+implement this specification MUST understand the class of any status code and
+treat an unrecognized code as equivalent to the x00 code of that class. An
+unrecognized <tt>566</tt> is therefore treated as <tt>500 Internal Server Error</tt>; an
+unrecognized hypothetical <tt>466</tt> would be treated as <tt>400 Bad Request</tt>. Operators
+SHOULD include a response body (see <xref target="response-body"></xref>) so human readers and
+generic clients see outage explanation rather than relying on the x00 fallback
+label alone.</t>
+</section>
+
+<section anchor="why-not-an-existing-4xx-code"><name>Why Not an Existing 4xx Code</name>
+<t><tt>421 Misdirected Request</tt> (Section 15.5.20 of <xref target="RFC9110"></xref>) is the closest
+registered precedent: it rejects a request when the connection context is
+inappropriate and allows the client to retry over a different connection.
+However, <tt>421</tt> is defined for HTTP origin routing and connection coalescing
+(Section 7.4 of <xref target="RFC9110"></xref>), not for intentional IPv4 path withdrawal during
+IPv6 migration. Reusing <tt>421</tt> risks confusion with existing HTTP/2 deployments
+and does not carry IPv6-specific signaling without the header fields defined
+here.</t>
+<t>Neither <tt>466</tt> nor <tt>566</tt> is heuristically cacheable (Section 15.1 of
+<xref target="RFC9110"></xref>). This document recommends <tt>Cache-Control: private, no-store</tt> for
+address-family-dependent responses (see <xref target="security-considerations"></xref>); the choice
+of class does not materially change caching behavior.</t>
+</section>
 </section>
 
 <section anchor="example"><name>Example</name>
@@ -488,9 +530,67 @@ raced the underlying connections.</li>
 over IPv6 MUST apply the IPv6 retry requirements in <xref target="ipv6-retry"></xref>; that
 behavior is an HTTP-layer extension beyond <xref target="RFC8305"></xref>.</li>
 </ul>
+
+<section anchor="happy-eyeballs-specification-versions"><name>Happy Eyeballs Specification Versions</name>
+<t>All published Happy Eyeballs specifications operate at connection establishment
+only. <xref target="RFC6555"></xref> defined the original dual-stack racing algorithm; <xref target="RFC8305"></xref>
+obsoletes it with parallel <tt>A</tt> and <tt>AAAA</tt> queries, address interleaving, a
+Connection Attempt Delay (recommended 250 ms), and caching of the successful
+address family (Section 5.2). Work on a Version 3 algorithm adds SVCB/HTTPS
+resource records and QUIC/TCP interleaving (<xref target="HEV3"></xref>) but still does not define
+HTTP status handling. None of these specifications treats an HTTP 4xx or 5xx
+response on one established connection as failure for other parallel connection
+attempts (Section 9.2 of <xref target="RFC8305"></xref>).</t>
+<t>Typical outcomes when IPv4 returns <tt>566</tt> during a Happy Eyeballs race:</t>
+
+<ul spacing="compact">
+<li>IPv6 delivers a successful HTTP response first --- the IPv4 attempt may be
+cancelled before <tt>566</tt> is received; no recovery signal is needed.</li>
+<li>IPv4 wins the transport race and returns <tt>566</tt> before IPv6 connects --- other
+attempts are likely already cancelled; an aware client MUST still apply
+<xref target="ipv6-retry"></xref>.</li>
+<li>Both connections are up --- completion order at the HTTP layer determines
+whether a late IPv4 <tt>566</tt> requires further action (see above).</li>
+</ul>
+<t>The numeric choice between a hypothetical <tt>466</tt> (4xx) and <tt>566</tt> (5xx) does not
+change Happy Eyeballs behavior, because connection racing does not inspect HTTP
+status codes.</t>
+</section>
+
+<section anchor="common-client-stack-behavior"><name>Common Client Stack Behavior</name>
+<t>This subsection is informative. Major HTTP clients do not automatically retry
+over IPv6 on <tt>566</tt>, <tt>503</tt> with <tt>Retry-Over-IPv6</tt>, or unknown 4xx/5xx codes
+unless they implement this specification or application-specific logic.</t>
+<t><strong>Web browsers.</strong> Chromium and Firefox implement Happy Eyeballs (<xref target="RFC8305"></xref> or
+successor algorithms) at the transport layer: the first successful TCP/TLS or
+QUIC handshake cancels other in-flight attempts. Neither browser automatically
+resends a request over the other address family because of an HTTP <tt>566</tt> or
+<tt>503</tt> response. Chromium does automatically resend in some other cases (for
+example <tt>421 Misdirected Request</tt>, certain connection errors on reused sockets,
+and limited HTTP/2 or QUIC protocol retries); those paths are unrelated to
+IPv4-unavailability signaling.</t>
+<t><strong>gRPC.</strong> Name resolution and load balancing (for example <tt>pick_first</tt> or
+<tt>round_robin</tt>) select among resolved addresses at connect time. Default gRPC
+retry behavior covers only uncommitted transparent retries; configured retry
+policies typically list <tt>UNAVAILABLE</tt> as a retryable code
+(<xref target="GRPC-HTTP-MAPPING"></xref>). That mapping lists <tt>503 Service Unavailable</tt> (and
+selected gateway and overload responses) as <tt>UNAVAILABLE</tt> but maps unknown
+status codes to <tt>UNKNOWN</tt>. gRPC implementations that support this document
+SHOULD map <tt>566</tt> to <tt>UNAVAILABLE</tt> (see <xref target="grpc-and-other-http-apis"></xref>) and honor
+<tt>Retry-Over-IPv6</tt> before treating multi-address errors as hard failures.</t>
+<t><strong>Rest.li and similar HTTP API frameworks.</strong> Client-side retry in Rest.li-style
+deployments is oriented toward failover to a different host in a cluster (for
+example after <tt>503 Service Unavailable</tt> from overload detection), not toward
+switching address family on the same hostname. Arbitrary 4xx or 5xx responses
+surface as application errors unless the framework or operator configures
+explicit retry rules.</t>
+<t>Because none of these stacks substitutes for the IPv6 retry behavior in
+<xref target="ipv6-retry"></xref>, operators deploying planned IPv4 outages SHOULD NOT assume that
+Happy Eyeballs or generic HTTP client libraries will recover automatically.</t>
 <t>Operators interpreting <tt>566</tt> and recovery metrics during planned outages SHOULD
 account for Happy Eyeballs transport racing and for the fact that HTTP status
 codes are not part of the RFC 8305 success definition.</t>
+</section>
 </section>
 
 <section anchor="example-1"><name>Example</name>
@@ -801,10 +901,15 @@ origins to emit the same signaling on all HTTP versions they expose.</t>
 </section>
 
 <section anchor="grpc-and-other-http-apis"><name>gRPC and Other HTTP APIs</name>
-<t>gRPC maps HTTP <tt>566</tt> to <tt>UNAVAILABLE</tt>, the same as <tt>503</tt>. gRPC implementations
-SHOULD inspect <tt>Retry-Over-IPv6</tt> on the HTTP response before aggregating
-multi-address connection errors, so that an IPv4 policy signal is not confused
-with IPv6 connectivity failure.</t>
+<t>gRPC over HTTP maps response status codes to RPC status when the <tt>grpc-status</tt>
+header is absent (<xref target="GRPC-HTTP-MAPPING"></xref>). That table maps <tt>503 Service
+Unavailable</tt> (and selected gateway timeouts and overload responses) to
+<tt>UNAVAILABLE</tt>; it maps <tt>400 Bad Request</tt> to <tt>INTERNAL</tt> and assigns <tt>UNKNOWN</tt>
+to most other codes, including unregistered 5xx values. Implementations that
+support this document SHOULD map HTTP <tt>566</tt> to <tt>UNAVAILABLE</tt>, the same as
+<tt>503</tt>, and SHOULD inspect <tt>Retry-Over-IPv6</tt> on the HTTP response before
+aggregating multi-address connection errors, so that an IPv4 policy signal is
+not confused with IPv6 connectivity failure.</t>
 <t>Suggested error text for logs: &quot;IPv4 unavailable until &lt;date&gt;; retry over
 IPv6.&quot;</t>
 <t>Retry policies SHOULD retry over IPv6 when <tt>Retry-Over-IPv6: ?1</tt> is present,
@@ -1027,6 +1132,7 @@ metrics alone when internal paths were not exercised.</t>
 <back>
 <references><name>Normative References</name>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6555.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8305.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9110.xml"/>
@@ -1036,6 +1142,26 @@ metrics alone when internal paths were not exercised.</t>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9651.xml"/>
 </references>
 <references><name>Informative References</name>
+<reference anchor="GRPC-HTTP-MAPPING" target="https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md">
+  <front>
+    <title>HTTP to gRPC Status Code Mapping</title>
+    <author>
+      <organization>gRPC Authors</organization>
+    </author>
+  </front>
+</reference>
+<reference anchor="HEV3" target="https://datatracker.ietf.org/doc/html/draft-pauly-happy-happyeyeballs-v3-00">
+  <front>
+    <title>Happy Eyeballs Version 3: Better Connectivity Using Concurrency and Protocol Negotiation</title>
+    <author fullname="Tommy Pauly" initials="T." surname="Pauly">
+      <organization>Apple Inc.</organization>
+    </author>
+    <author fullname="David Schinazi" initials="D." surname="Schinazi">
+      <organization>Apple Inc.</organization>
+    </author>
+    <date year="2024"></date>
+  </front>
+</reference>
 <reference anchor="IETF71-IPV4-OUTAGE" target="https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage">
   <front>
     <title>IETF 71 IPv4 Outage</title>
