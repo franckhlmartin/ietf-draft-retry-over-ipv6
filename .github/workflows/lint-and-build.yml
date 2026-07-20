@@ -35,6 +35,6 @@ jobs:
         with:
           name: draft-artifacts
           path: |
-            draft-martin-retry-over-ipv6-02.xml
-            draft-martin-retry-over-ipv6-02.txt
-            draft-martin-retry-over-ipv6-02.html
+            draft-martin-retry-over-ipv6-03.xml
+            draft-martin-retry-over-ipv6-03.txt
+            draft-martin-retry-over-ipv6-03.html

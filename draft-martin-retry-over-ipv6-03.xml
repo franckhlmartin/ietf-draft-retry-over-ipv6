@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- name="GENERATOR" content="github.com/mmarkdown/mmark Mmark Markdown Processor - mmark.miek.nl" -->
-<rfc version="3" ipr="trust200902" docName="draft-martin-retry-over-ipv6-02" category="std" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" indexInclude="true">
+<rfc version="3" ipr="trust200902" docName="draft-martin-retry-over-ipv6-03" category="std" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" indexInclude="true" consensus="true">
 
 <front>
-<title abbrev="retry-over-ipv6">HTTP Signaling of Planned IPv4 Unavailability</title><seriesInfo value="draft-martin-retry-over-ipv6-02" stream="IETF" status="standard" name="Internet-Draft"></seriesInfo>
+<title abbrev="retry-over-ipv6">HTTP Signaling of Planned IPv4 Unavailability</title><seriesInfo value="draft-martin-retry-over-ipv6-03" stream="IETF" status="standard" name="Internet-Draft"></seriesInfo>
 <author initials="F." surname="Martin" fullname="Franck Martin"><organization>Peachymango.org</organization><address><postal><street></street>
 </postal><email>franck@peachymango.org</email>
-</address></author><date year="2026" month="June" day="30"></date>
+</address></author><date year="2026" month="July" day="19"></date>
 <area>art</area>
 <workgroup>HTTP Working Group</workgroup>
 <keyword>IPv6</keyword>
@@ -20,7 +20,7 @@
 <t>As operators transition services to IPv6-only, planned IPv4 outages help identify
 remaining dependencies before permanent decommission. Such outages must be
 measurable, reversible, and understandable to end users. This document defines
-the <tt>566</tt> (IPv4 Unavailable) HTTP response status code and associated header
+the <tt>5NN</tt> (IPv4 Unavailable) HTTP response status code and associated header
 fields that signal an intentional, often time-bounded IPv4 outage, instruct
 aware clients to retry over IPv6 after closing the IPv4 connection, and allow
 clients to confirm successful IPv6 recovery via an optional correlation token
@@ -30,9 +30,29 @@ and permanent IPv6-only migration; coordinated public events (for example, 6/6
 drills) remain possible with advance notice. The primary intended deployment is
 operator-controlled environments where provider and users share operational
 responsibility. Legacy clients that do not implement this specification treat an unrecognized
-<tt>566</tt> status code as an internal server error and MAY use the response body for
+<tt>5NN</tt> status code as an internal server error and MAY use the response body for
 human-readable guidance.</t>
 </abstract>
+
+<note><name>About This Document</name>
+<t>This note is to be removed before publishing as an RFC.</t>
+<t>The latest revision of this draft can be found at
+<eref target="https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6/">https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6/</eref>.
+Status information for this document may be found at
+<eref target="https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/">https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/</eref>.</t>
+<t>Discussion of this document takes place primarily on the v6ops Working Group
+mailing list (<eref target="mailto:v6ops@ietf.org">mailto:v6ops@ietf.org</eref>), which is archived at
+<eref target="https://mailarchive.ietf.org/arch/browse/v6ops/">https://mailarchive.ietf.org/arch/browse/v6ops/</eref>. Subscribe at
+<eref target="https://www.ietf.org/mailman/listinfo/v6ops/">https://www.ietf.org/mailman/listinfo/v6ops/</eref>. Expert input is also sought from
+the HTTP Working Group (httpbis).</t>
+<t>Source for this draft and an issue tracker can be found at
+<eref target="https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6">https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6</eref>.</t>
+<t>Interim implementations and tests currently use status code <tt>566</tt> as a concrete
+stand-in for the <tt>5NN</tt> (IPv4 Unavailable) code defined in this document. IANA
+may assign a different 5xx value; this document therefore refers to <tt>5NN</tt> until
+assignment, as recommended for new status codes in Section 16.2.2 of RFC 9110.
+This document suggests <tt>566</tt> if that value remains available.</t>
+</note>
 
 </front>
 
@@ -91,14 +111,14 @@ requests can be material).</li>
 <t>HTTP-layer IPv4 outages address these gaps:</t>
 
 <ul spacing="compact">
-<li><strong>Easy rollback</strong> --- disable the <tt>566</tt> policy at the load balancer or origin
+<li><strong>Easy rollback</strong> --- disable the <tt>5NN</tt> policy at the load balancer or origin
 without waiting for DNS TTL expiry.</li>
 <li><strong>Advance communication</strong> --- site banners, email, and status pages can
 reference the same window as <tt>IPv4-Unavailable-Until</tt>.</li>
 <li><strong>Clear user messaging</strong> --- a response body explains that IPv4 is
-intentionally unavailable, when service may resume, and that IPv6 (or
-contacting an ISP or IT department) is the remedy.</li>
-<li><strong>Operator metrics</strong> --- count <tt>566</tt> responses and join them with
+intentionally unavailable, when service may resume, and what the reader can
+try next (including an IPv6-only link when published).</li>
+<li><strong>Operator metrics</strong> --- count <tt>5NN</tt> responses and join them with
 <tt>Retry-Over-IPv6-Recovery</tt> (and optional tokens) in centralized logs to
 estimate soft versus hard failure rates.</li>
 </ul>
@@ -118,12 +138,15 @@ defining those signals is out of scope for this document.</t>
 </section>
 
 <section anchor="intended-deployment"><name>Intended Deployment</name>
-<t>Operators <bcp14>SHOULD NOT</bcp14> deploy planned IPv4 outages with <tt>566</tt> signaling on the
-open Internet as a routine IPv6 migration technique. Public use can annoy users:
-legacy clients treat an unrecognized <tt>566</tt> as <tt>500 Internal Server Error</tt>, aware
-clients must close the IPv4 connection and retry, and users on IPv4-only paths
-see an error even when the service remains available over IPv6 on other paths.
-Unannounced or frequent public drills risk support load and reputational harm.</t>
+<t>Operators deploying planned IPv4 outages with <tt>5NN</tt> signaling on the <strong>public
+Internet</strong> SHOULD do so with care. Public use can annoy users: legacy clients
+treat an unrecognized <tt>5NN</tt> as <tt>500 Internal Server Error</tt>, aware clients must
+close the IPv4 connection and retry, and users on IPv4-only paths see an error
+even when the service remains available over IPv6 on other paths. Unannounced
+or frequent public drills can increase support load and reputational risk.
+Operators SHOULD weigh those effects against the operational value of the
+signal, prefer advance notice, and limit duration and frequency where impact on
+unrelated users is likely.</t>
 <t>When an operator is <strong>obliged</strong> to run a planned IPv4 outage --- for example, a
 fixed government cutover deadline, a coordinated industry drill with advance
 notice, or an irreversible network-layer change --- HTTP-layer signaling is a
@@ -134,9 +157,15 @@ environments</strong> where the service provider and the user population are the
 entity or share operational responsibility --- for example, enterprise
 intranets, government administration networks, internal API gateways, staging
 environments, and microservice deployments where clients are operated by the
-same organization. In those settings, operators can deploy aware clients,
-communicate maintenance windows, and interpret soft versus hard failure metrics
-without imposing unexplained errors on unrelated Internet users.</t>
+same organization. In those settings, operators can communicate maintenance
+windows and interpret soft versus hard failure metrics without imposing
+unexplained errors on unrelated Internet users. Even so, operators typically
+<strong>do not control every application, client, or coding library</strong> deployed in
+the environment: vendor software, open-source dependencies, partner
+integrations, and third-party SDKs may still prefer IPv4 or lack a shared
+retry convention. This document provides a common HTTP signal so those
+diverse code bases can coordinate recovery toward IPv6 for the benefit of
+adopters of IPv6-only environments.</t>
 <t>Public Internet use <bcp14>MAY</bcp14> remain appropriate for time-bounded, widely
 communicated events (for example, 6/6 drills) when advance user communication is
 proportional to expected impact.</t>
@@ -192,14 +221,14 @@ expected to remain available.</t>
 <t><strong>Aware client</strong>: A client implementation that supports the mechanisms defined
 in this document.</t>
 <t><strong>Legacy client</strong>: A client that does not implement this document.</t>
-<t><strong>Soft failure</strong>: A client receives <tt>566</tt> (or transitional <tt>503</tt> with
+<t><strong>Soft failure</strong>: A client receives <tt>5NN</tt> (or transitional <tt>503</tt> with
 <tt>Retry-Over-IPv6</tt>) over IPv4 and subsequently completes the same request
 successfully over IPv6. Soft and hard failure classification is <strong>per aware
-client and per signaling hop</strong> (the entity that returned <tt>566</tt>), not
+client and per signaling hop</strong> (the entity that returned <tt>5NN</tt>), not
 end-to-end application success. A soft failure does not guarantee that
 downstream processing (for example, origin work reached over an IPv4-only pod
 network) succeeded.</t>
-<t><strong>Hard failure</strong>: A client receives <tt>566</tt> over IPv4 but cannot successfully
+<t><strong>Hard failure</strong>: A client receives <tt>5NN</tt> over IPv4 but cannot successfully
 complete the request over IPv6.</t>
 </section>
 </section>
@@ -209,7 +238,7 @@ complete the request over IPv6.</t>
 entity that receives a request over IPv4 sends:</t>
 
 <ol spacing="compact">
-<li><strong><tt>566</tt> (IPv4 Unavailable)</strong>, or during transitional deployments <strong><tt>503
+<li><strong><tt>5NN</tt> (IPv4 Unavailable)</strong>, or during transitional deployments <strong><tt>503
 Service Unavailable</tt></strong> with the same header fields --- the IPv4 path is
 unavailable; the service is not a general outage if IPv6 is expected to work.</li>
 <li><strong><tt>Retry-Over-IPv6: ?1</tt></strong> --- the client should retry the same request over
@@ -220,25 +249,25 @@ and <strong><tt>Retry-Over-IPv6-Recovery</tt></strong> (on a successful IPv6 ret
 telemetry so operators can correlate soft failures across load-balanced
 backends.</li>
 </ol>
-<t>Implementations that cannot emit <tt>566</tt> (for example, before the status code is
+<t>Implementations that cannot emit <tt>5NN</tt> (for example, before the status code is
 registered or supported by their HTTP stack) <bcp14>MAY</bcp14> send <strong><tt>503 Service
 Unavailable</tt></strong> instead, with <strong><tt>Retry-Over-IPv6: ?1</tt></strong> and the other response
 header fields defined in this document. Aware clients treat <tt>503</tt> with
-<tt>Retry-Over-IPv6: ?1</tt> the same as <tt>566</tt> when deciding to retry over IPv6 (see
-<xref target="retry-over-ipv6"></xref> and <xref target="client-requirements"></xref>). Operators <bcp14>SHOULD</bcp14> use <tt>566</tt>
+<tt>Retry-Over-IPv6: ?1</tt> the same as <tt>5NN</tt> when deciding to retry over IPv6 (see
+<xref target="retry-over-ipv6"></xref> and <xref target="client-requirements"></xref>). Operators <bcp14>SHOULD</bcp14> use <tt>5NN</tt>
 once their deployment supports it.</t>
-<t>The responding entity <bcp14>MUST</bcp14> send <tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>
+<t>The responding entity <bcp14>MUST</bcp14> send <tt>5NN</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>
 during transitional deployments) only when the request was received over an
 IPv4 transport connection on the client-facing path (see
 <xref target="server-and-operational-considerations"></xref>).</t>
 <t>Clients that do not implement this specification and receive an unrecognized
-<tt>566</tt> status code MUST treat it as <tt>500 Internal Server Error</tt>, as required by
+<tt>5NN</tt> status code MUST treat it as <tt>500 Internal Server Error</tt>, as required by
 Section 15 of <xref target="RFC9110"></xref>. Operators SHOULD include a response body explaining
 the IPv4 outage for human readers and for logging by generic HTTP clients.</t>
 </section>
 
-<section anchor="the-566-ipv4-unavailable-status-code"><name>The 566 IPv4 Unavailable Status Code</name>
-<t>The <tt>566</tt> (IPv4 Unavailable) status code indicates that the responding entity
+<section anchor="the-5nn-ipv4-unavailable-status-code"><name>The 5NN IPv4 Unavailable Status Code</name>
+<t>The <tt>5NN</tt> (IPv4 Unavailable) status code indicates that the responding entity
 is intentionally not offering the requested service over IPv4 for this authority,
 while service over IPv6 is expected to be available. The client SHOULD retry
 the same request to the same target URI using IPv6 if IPv6 connectivity is
@@ -247,22 +276,39 @@ available.</t>
 IPv4. It MUST NOT be used to indicate general server overload or maintenance
 that affects all address families (<tt>503 Service Unavailable</tt> is appropriate for
 that case). It is generally inappropriate on the IPv4 loopback interface (see
-<xref target="when-to-send-566"></xref>).</t>
-<t>Intermediaries and caches MUST NOT transform a <tt>566</tt> response into a successful
-response. Caching of <tt>566</tt> is governed by normal HTTP cache rules
-<xref target="RFC9111"></xref>; operators SHOULD send appropriate <tt>Cache-Control</tt> when responses
-are generated dynamically based on the client-facing address family.</t>
-<t>A <tt>566</tt> response SHOULD include <tt>Retry-Over-IPv6</tt> as defined in
-<xref target="retry-over-ipv6"></xref>. It MAY include <tt>IPv4-Unavailable-Until</tt>, a response body,
-and <tt>Retry-Over-IPv6-Token</tt>.</t>
+<xref target="when-to-send-5nn"></xref>).</t>
+<t>By default, <tt>5NN</tt> applies only to the request corresponding to the response in
+which it occurs (Section 16.2.2 of <xref target="RFC9110"></xref>). It does not by itself invalidate
+other in-flight or future requests to the authority. Aware clients MAY prefer
+IPv6 for subsequent connections as described in <xref target="client-requirements"></xref>; that
+preference is client policy, not an expanded status-code scope that all clients
+can be expected to apply.</t>
+<t>Intermediaries and caches MUST NOT transform a <tt>5NN</tt> response into a successful
+response. <tt>5NN</tt> is <strong>not</strong> heuristically cacheable (Section 15.1 of
+<xref target="RFC9110"></xref>). Caching is governed by normal HTTP cache rules <xref target="RFC9111"></xref>;
+operators SHOULD send <tt>Cache-Control: private, no-store</tt> when responses are
+generated dynamically based on the client-facing address family (see
+<xref target="security-considerations"></xref>).</t>
+<t>A <tt>5NN</tt> response MUST NOT disallow content (Section 16.2.2 of <xref target="RFC9110"></xref>).
+The response MAY include a representation and SHOULD include one for human
+guidance (see <xref target="response-body"></xref>). Any representation explains the IPv4 outage;
+an optional IPv6-only-reachable alternate URI in the body is informational and
+does not redefine the identity of the original target resource
+(Section 6.4.2 of <xref target="RFC9110"></xref>).</t>
+<t>A <tt>5NN</tt> response SHOULD include <tt>Retry-Over-IPv6</tt> as defined in
+<xref target="retry-over-ipv6"></xref>; on <tt>5NN</tt> responses the value MUST be <tt>?1</tt>. It MAY include
+<tt>IPv4-Unavailable-Until</tt>, a response body, and <tt>Retry-Over-IPv6-Token</tt>.</t>
 
 <section anchor="status-code-selection"><name>Status Code Selection</name>
-<t>This document registers <tt>566</tt> (IPv4 Unavailable) in the HTTP status code range
-512-599, which is currently unassigned. The code number is chosen to align with
-<strong>6/6 (June 6)</strong>, the date used for coordinated IPv6 deployment events such as
-World IPv6 Launch, and embeds <strong>66</strong> as a mnemonic for IPv6 within the 5xx
-server-error class. This mnemonic is for human operability only; protocol
-behavior does not depend on the numeric value beyond its 5xx class.</t>
+<t>Per Section 16.2.2 of <xref target="RFC9110"></xref>, early drafts ought to avoid allocating a
+specific status-code number until there is clear consensus that it will be
+registered. This document therefore uses the placeholder <tt>5NN</tt> for IPv4
+Unavailable. Interim implementations and tests currently use <tt>566</tt> as a
+concrete stand-in; this document suggests that IANA assign <strong>566</strong> if that
+value remains available (see <xref target="iana-considerations"></xref>), reflecting the <strong>6/6
+(June 6)</strong> mnemonic used for coordinated IPv6 events such as World IPv6 Launch.
+The mnemonic is for human operability only; protocol behavior depends on the
+5xx class, not on the particular assigned digits.</t>
 
 <section anchor="why-the-5xx-class"><name>Why the 5xx Class</name>
 <t>Section 15.6 of <xref target="RFC9110"></xref> defines the 5xx (Server Error) class for cases where
@@ -272,23 +318,31 @@ request is valid, but the responding entity declines to serve it on the IPv4
 client-facing path while IPv6 remains available. That aligns with 5xx semantics
 and with the transitional <tt>503 Service Unavailable</tt> fallback defined in this
 document (see <xref target="transitional-fallback"></xref>).</t>
+<t>The choice of the 5xx class is also analogous to <tt>505 HTTP Version Not Supported</tt>
+(Section 15.6.6 of <xref target="RFC9110"></xref>): the server does not support, or refuses to
+support, completing the request using the same major path characteristics the
+client used --- here, IPv4 rather than an HTTP version --- other than by
+returning this error. As with <tt>505</tt>, the server SHOULD generate a representation
+that explains why the request cannot be completed on that path and what else is
+supported (IPv6 on the same authority, and optionally an IPv6-only-reachable
+site URI; see <xref target="response-body"></xref>).</t>
 <t>Section 15.5 of <xref target="RFC9110"></xref> defines the 4xx (Client Error) class for cases where
-the client seems to have erred. A hypothetical <tt>466</tt> code in the unassigned
-432-499 range would embed the same 6/6 mnemonic in the 4xx class but would imply
-that the client could resolve the failure by correcting the request. IPv4-only
-clients cannot self-correct by switching address family; framing the outage as a
-client error is misleading for that audience.</t>
+the client seems to have erred. A hypothetical <tt>4NN</tt> / <tt>466</tt> code would embed a
+similar mnemonic in the 4xx class but would imply that the client could resolve
+the failure by correcting the request. IPv4-only clients cannot self-correct by
+switching address family; framing the outage as a client error is misleading for
+that audience.</t>
 </section>
 
 <section anchor="legacy-fallback"><name>Legacy Fallback</name>
 <t>HTTP status codes are extensible (Section 15 of <xref target="RFC9110"></xref>). Clients that do not
 implement this specification MUST understand the class of any status code and
 treat an unrecognized code as equivalent to the x00 code of that class. An
-unrecognized <tt>566</tt> is therefore treated as <tt>500 Internal Server Error</tt>; an
-unrecognized hypothetical <tt>466</tt> would be treated as <tt>400 Bad Request</tt>. Operators
-SHOULD include a response body (see <xref target="response-body"></xref>) so human readers and
-generic clients see outage explanation rather than relying on the x00 fallback
-label alone.</t>
+unrecognized <tt>5NN</tt> (including experimental <tt>566</tt>) is therefore treated as
+<tt>500 Internal Server Error</tt>; an unrecognized hypothetical <tt>466</tt> would be treated
+as <tt>400 Bad Request</tt>. Operators SHOULD include a response body (see
+<xref target="response-body"></xref>) so human readers and generic clients see outage explanation
+rather than relying on the x00 fallback label alone.</t>
 </section>
 
 <section anchor="why-not-an-existing-4xx-code"><name>Why Not an Existing 4xx Code</name>
@@ -300,14 +354,36 @@ However, <tt>421</tt> is defined for HTTP origin routing and connection coalesci
 IPv6 migration. Reusing <tt>421</tt> risks confusion with existing HTTP/2 deployments
 and does not carry IPv6-specific signaling without the header fields defined
 here.</t>
-<t>Neither <tt>466</tt> nor <tt>566</tt> is heuristically cacheable (Section 15.1 of
-<xref target="RFC9110"></xref>). This document recommends <tt>Cache-Control: private, no-store</tt> for
-address-family-dependent responses (see <xref target="security-considerations"></xref>); the choice
-of class does not materially change caching behavior.</t>
+</section>
+
+<section anchor="why-not-a-3xx-redirect"><name>Why Not a 3xx Redirect</name>
+<t>A <tt>3xx</tt> (Redirection) response (Section 15.4 of <xref target="RFC9110"></xref>) with a <tt>Location</tt>
+URI is a poor fit for planned IPv4 unavailability.</t>
+<t>The <tt>http</tt> and <tt>https</tt> URI schemes (Section 4.2 of <xref target="RFC9110"></xref>) identify an
+authority by registered name or IP literal. There is no standard URI parameter
+or flag that means &quot;resolve this registered name for IPv6 only&quot; when the name
+is dual-stack. Redirecting to the <strong>same</strong> hostname therefore risks an
+<strong>infinite redirect loop</strong> or repeated selection of IPv4 under Happy Eyeballs
+or similar algorithms: the client follows <tt>Location</tt>, connects again over IPv4,
+and receives another redirect.</t>
+<t>Redirecting to a <strong>distinct IPv6-only-reachable hostname</strong> can work, but it
+requires creating and operating that name in DNS (for example, no usable A
+records, or IPv4 deliberately not served) and obtaining a matching HTTPS
+certificate. That operational cost is optional for human messaging in the
+response body (see <xref target="response-body"></xref>); it is not a prerequisite for machine
+retry. This document instead signals retry of the <strong>same</strong> target URI over
+IPv6 via <tt>Retry-Over-IPv6</tt> (see <xref target="ipv6-retry"></xref>).</t>
+<t>For <strong>IPv4-only clients</strong>, a <tt>3xx</tt> to an IPv6-only name typically becomes a
+<strong>connection or name-resolution failure</strong> after the redirect, not a stable HTTP
+error with a representation. That makes the outage harder to log, explain, and
+debug than a <tt>5NN</tt> response, which remains a protocol-level signal with an
+optional body even when the client cannot use IPv6.</t>
 </section>
 </section>
 
 <section anchor="example"><name>Example</name>
+<t>Wire examples in this document use <tt>566</tt> as the suggested / temporary test value
+for <tt>5NN</tt> pending IANA assignment.</t>
 
 <sourcecode type="http"><![CDATA[HTTP/1.1 566 IPv4 Unavailable
 Retry-Over-IPv6: ?1
@@ -332,9 +408,9 @@ retry the same request over IPv6.</t>
 <sourcecode type="abnf"><![CDATA[Retry-Over-IPv6 = "Retry-Over-IPv6" OWS ":" OWS boolean
 boolean         = "?0" / "?1"
 ]]></sourcecode>
-<t>On <tt>566</tt> responses, the value <bcp14>MUST</bcp14> be <tt>?1</tt>.</t>
+<t>On <tt>5NN</tt> responses, the value <bcp14>MUST</bcp14> be <tt>?1</tt>.</t>
 <t>For transitional deployments, <tt>503 Service Unavailable</tt> responses MAY include
-<tt>Retry-Over-IPv6: ?1</tt>; once <tt>566</tt> is widely supported, operators SHOULD NOT
+<tt>Retry-Over-IPv6: ?1</tt>; once <tt>5NN</tt> is widely supported, operators SHOULD NOT
 rely on the <tt>503</tt> fallback.</t>
 </section>
 
@@ -375,14 +451,14 @@ indicates how long to wait before a follow-up request in overload or rate-limit
 scenarios, while <tt>IPv4-Unavailable-Until</tt> marks the end of a planned IPv4
 unavailability window.</t>
 <t>Operators MAY also send <tt>Retry-After</tt> for legacy clients that do not understand
-<tt>566</tt> or <tt>IPv4-Unavailable-Until</tt>.</t>
+<tt>5NN</tt> or <tt>IPv4-Unavailable-Until</tt>.</t>
 </section>
 </section>
 
 <section anchor="retry-over-ipv6-token"><name>Retry-Over-IPv6-Token</name>
 <t>The <tt>Retry-Over-IPv6-Token</tt> response header field carries an opaque token that
 a client MAY echo on a subsequent successful IPv6 retry so operators can
-correlate a <tt>566</tt> response with a recovery in centralized logs.</t>
+correlate a <tt>5NN</tt> response with a recovery in centralized logs.</t>
 
 <section anchor="syntax-2"><name>Syntax</name>
 
@@ -399,8 +475,8 @@ structure.</t>
 <tt>IPv4-Unavailable-Until</tt> when that header is present). Deployments SHOULD use
 stateless tokens verifiable or loggable by any node in a load-balanced fleet
 without session affinity to a particular origin server.</t>
-<t>This header is RECOMMENDED on <tt>566</tt> responses when operators want pairwise
-566-to-recovery correlation across backends.</t>
+<t>This header is RECOMMENDED on <tt>5NN</tt> responses when operators want pairwise
+5NN-to-recovery correlation across backends.</t>
 </section>
 </section>
 
@@ -412,7 +488,7 @@ without session affinity to a particular origin server.</t>
 <li><tt>Cache-Control: no-store</tt> on dynamically generated outage responses.</li>
 <li>A response body with plain language (see <xref target="response-body"></xref>).</li>
 </ul>
-<t>Aware clients MUST prefer <tt>566</tt>, <tt>Retry-Over-IPv6</tt>, and <tt>IPv4-Unavailable-Until</tt>
+<t>Aware clients MUST prefer <tt>5NN</tt>, <tt>Retry-Over-IPv6</tt>, and <tt>IPv4-Unavailable-Until</tt>
 over inferring outage semantics from the body alone.</t>
 </section>
 </section>
@@ -421,7 +497,7 @@ over inferring outage semantics from the body alone.</t>
 
 <section anchor="retry-over-ipv6-recovery"><name>Retry-Over-IPv6-Recovery</name>
 <t>The <tt>Retry-Over-IPv6-Recovery</tt> request header field allows an aware client to
-confirm that a successful request over IPv6 is the retry following a <tt>566</tt>
+confirm that a successful request over IPv6 is the retry following a <tt>5NN</tt>
 response (or transitional <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) received over IPv4.</t>
 
 <section anchor="syntax-3"><name>Syntax</name>
@@ -432,12 +508,12 @@ response (or transitional <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) receiv
 recovery-param           = token "=" ( token / quoted-string )
 ]]></sourcecode>
 <t>The only recovery parameter defined by this document is <tt>token</tt>, whose value
-SHOULD be copied from <tt>Retry-Over-IPv6-Token</tt> on the prior <tt>566</tt> response.</t>
+SHOULD be copied from <tt>Retry-Over-IPv6-Token</tt> on the prior <tt>5NN</tt> response.</t>
 </section>
 
 <section anchor="semantics-3"><name>Semantics</name>
 <t>The field value <tt>recovered</tt> means: the responding entity previously returned
-<tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) on an IPv4 connection for this
+<tt>5NN</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) on an IPv4 connection for this
 logical request attempt, and this request is the successful retry over IPv6.</t>
 <t>The client MUST send this header on the first successful IPv6 request that
 follows such a response for the same target URI. The client MUST NOT send it on
@@ -457,11 +533,11 @@ state, cancellation, and handling of duplicate or late responses) and is
 therefore uncommon.</t>
 <t>For this reason, <tt>Retry-Over-IPv6-Recovery</tt> is carried on the <strong>IPv6</strong> retry
 request. Operators <bcp14>MUST NOT</bcp14> expect recovery signaling on the IPv4
-connection that received <tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>).</t>
+connection that received <tt>5NN</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>).</t>
 <t>A typical sequence is:</t>
 
 <ol spacing="compact">
-<li>Receive <tt>566</tt> (and optional <tt>Retry-Over-IPv6-Token</tt>) on IPv4.</li>
+<li>Receive <tt>5NN</tt> (and optional <tt>Retry-Over-IPv6-Token</tt>) on IPv4.</li>
 <li>Close or abandon the IPv4 connection.</li>
 <li>Open a new connection over IPv6 and retry the same request.</li>
 <li>On success, include <tt>Retry-Over-IPv6-Recovery</tt> on that IPv6 request.</li>
@@ -469,19 +545,19 @@ connection that received <tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6:
 </section>
 
 <section anchor="cross-backend-logging"><name>Cross-Backend Logging</name>
-<t>In load-balanced deployments, the <tt>566</tt> response and the recovery request often
+<t>In load-balanced deployments, the <tt>5NN</tt> response and the recovery request often
 reach different origin servers. Correlation is an operator responsibility:</t>
 
 <ul spacing="compact">
-<li>Log <tt>566</tt> events with <tt>Retry-Over-IPv6-Token</tt> at the edge, load balancer, or
+<li>Log <tt>5NN</tt> events with <tt>Retry-Over-IPv6-Token</tt> at the edge, load balancer, or
 origin.</li>
 <li>Log <tt>Retry-Over-IPv6-Recovery</tt> (and echoed <tt>token</tt>) at the same aggregation
 tier when possible.</li>
 <li>Join events off-box by token across all backend logs.</li>
 </ul>
-<t>Operators SHOULD NOT assume that the origin server that emitted <tt>566</tt> will
+<t>Operators SHOULD NOT assume that the origin server that emitted <tt>5NN</tt> will
 receive the recovery report.</t>
-<t>Without tokens, operators MAY compare aggregate <tt>566</tt> counts with aggregate
+<t>Without tokens, operators MAY compare aggregate <tt>5NN</tt> counts with aggregate
 recovery counts over an outage window; this yields ratio estimates only, not
 per-session pairing.</t>
 </section>
@@ -506,7 +582,7 @@ succeeded. Section 9 of <xref target="RFC8305"></xref> states that Happy Eyeball
 at the TCP/IP layer only; Section 9.2 explicitly notes that the application
 (for example, TLS or <strong>HTTP</strong>) may not be operational on every resolved address.
 <strong>RFC 8305 does not specify that an HTTP <tt>5xx</tt> response on one connection
-counts as failure for all parallel connection attempts.</strong> A <tt>566</tt> (or <tt>503</tt>
+counts as failure for all parallel connection attempts.</strong> A <tt>5NN</tt> (or <tt>503</tt>
 with <tt>Retry-Over-IPv6: ?1</tt>) is an HTTP response on an already-established
 connection; handling it --- including whether to retry over the other address
 family --- is <strong>outside</strong> the Happy Eyeballs connection-race algorithm and is
@@ -515,18 +591,18 @@ left to the HTTP client or application.</t>
 
 <ul spacing="compact">
 <li>If IPv6 completes the transport handshake and delivers a successful HTTP
-response first, the client MAY cancel the IPv4 attempt before <tt>566</tt> is
-received. No <tt>Retry-Over-IPv6-Recovery</tt> is sent. <tt>566</tt> counts may
+response first, the client MAY cancel the IPv4 attempt before <tt>5NN</tt> is
+received. No <tt>Retry-Over-IPv6-Recovery</tt> is sent. <tt>5NN</tt> counts may
 under-represent total exposure --- this is often the desired outcome during an
 outage.</li>
 <li>The client MUST send <tt>Retry-Over-IPv6-Recovery</tt> only if it fully received
-<tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) on an IPv4 connection for this
+<tt>5NN</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) on an IPv4 connection for this
 logical request attempt.</li>
 <li>If IPv6 already succeeded for this logical request attempt at the HTTP
-layer, the client MUST NOT treat a late or abandoned IPv4 <tt>566</tt> as requiring
+layer, the client MUST NOT treat a late or abandoned IPv4 <tt>5NN</tt> as requiring
 another IPv6 retry or recovery signal --- regardless of how Happy Eyeballs
 raced the underlying connections.</li>
-<li>An aware client that receives <tt>566</tt> only on IPv4 and has not yet succeeded
+<li>An aware client that receives <tt>5NN</tt> only on IPv4 and has not yet succeeded
 over IPv6 MUST apply the IPv6 retry requirements in <xref target="ipv6-retry"></xref>; that
 behavior is an HTTP-layer extension beyond <xref target="RFC8305"></xref>.</li>
 </ul>
@@ -541,30 +617,30 @@ resource records and QUIC/TCP interleaving (<xref target="HEV3"></xref>) but sti
 HTTP status handling. None of these specifications treats an HTTP 4xx or 5xx
 response on one established connection as failure for other parallel connection
 attempts (Section 9.2 of <xref target="RFC8305"></xref>).</t>
-<t>Typical outcomes when IPv4 returns <tt>566</tt> during a Happy Eyeballs race:</t>
+<t>Typical outcomes when IPv4 returns <tt>5NN</tt> during a Happy Eyeballs race:</t>
 
 <ul spacing="compact">
 <li>IPv6 delivers a successful HTTP response first --- the IPv4 attempt may be
-cancelled before <tt>566</tt> is received; no recovery signal is needed.</li>
-<li>IPv4 wins the transport race and returns <tt>566</tt> before IPv6 connects --- other
+cancelled before <tt>5NN</tt> is received; no recovery signal is needed.</li>
+<li>IPv4 wins the transport race and returns <tt>5NN</tt> before IPv6 connects --- other
 attempts are likely already cancelled; an aware client MUST still apply
 <xref target="ipv6-retry"></xref>.</li>
 <li>Both connections are up --- completion order at the HTTP layer determines
-whether a late IPv4 <tt>566</tt> requires further action (see above).</li>
+whether a late IPv4 <tt>5NN</tt> requires further action (see above).</li>
 </ul>
-<t>The numeric choice between a hypothetical <tt>466</tt> (4xx) and <tt>566</tt> (5xx) does not
+<t>The numeric choice between a hypothetical <tt>466</tt> (4xx) and <tt>5NN</tt> (5xx) does not
 change Happy Eyeballs behavior, because connection racing does not inspect HTTP
 status codes.</t>
 </section>
 
 <section anchor="common-client-stack-behavior"><name>Common Client Stack Behavior</name>
 <t>This subsection is informative. Major HTTP clients do not automatically retry
-over IPv6 on <tt>566</tt>, <tt>503</tt> with <tt>Retry-Over-IPv6</tt>, or unknown 4xx/5xx codes
+over IPv6 on <tt>5NN</tt>, <tt>503</tt> with <tt>Retry-Over-IPv6</tt>, or unknown 4xx/5xx codes
 unless they implement this specification or application-specific logic.</t>
 <t><strong>Web browsers.</strong> Chromium and Firefox implement Happy Eyeballs (<xref target="RFC8305"></xref> or
 successor algorithms) at the transport layer: the first successful TCP/TLS or
 QUIC handshake cancels other in-flight attempts. Neither browser automatically
-resends a request over the other address family because of an HTTP <tt>566</tt> or
+resends a request over the other address family because of an HTTP <tt>5NN</tt> or
 <tt>503</tt> response. Chromium does automatically resend in some other cases (for
 example <tt>421 Misdirected Request</tt>, certain connection errors on reused sockets,
 and limited HTTP/2 or QUIC protocol retries); those paths are unrelated to
@@ -576,7 +652,7 @@ policies typically list <tt>UNAVAILABLE</tt> as a retryable code
 (<xref target="GRPC-HTTP-MAPPING"></xref>). That mapping lists <tt>503 Service Unavailable</tt> (and
 selected gateway and overload responses) as <tt>UNAVAILABLE</tt> but maps unknown
 status codes to <tt>UNKNOWN</tt>. gRPC implementations that support this document
-SHOULD map <tt>566</tt> to <tt>UNAVAILABLE</tt> (see <xref target="grpc-and-other-http-apis"></xref>) and honor
+SHOULD map <tt>5NN</tt> to <tt>UNAVAILABLE</tt> (see <xref target="grpc-and-other-http-apis"></xref>) and honor
 <tt>Retry-Over-IPv6</tt> before treating multi-address errors as hard failures.</t>
 <t><strong>Rest.li and similar HTTP API frameworks.</strong> Client-side retry in Rest.li-style
 deployments is oriented toward failover to a different host in a cluster (for
@@ -587,7 +663,7 @@ explicit retry rules.</t>
 <t>Because none of these stacks substitutes for the IPv6 retry behavior in
 <xref target="ipv6-retry"></xref>, operators deploying planned IPv4 outages SHOULD NOT assume that
 Happy Eyeballs or generic HTTP client libraries will recover automatically.</t>
-<t>Operators interpreting <tt>566</tt> and recovery metrics during planned outages SHOULD
+<t>Operators interpreting <tt>5NN</tt> and recovery metrics during planned outages SHOULD
 account for Happy Eyeballs transport racing and for the fact that HTTP status
 codes are not part of the RFC 8305 success definition.</t>
 </section>
@@ -605,7 +681,7 @@ Retry-Over-IPv6-Recovery: recovered; token="a1b2c3d4e5f6"
 </section>
 
 <section anchor="response-body"><name>Response Body</name>
-<t>Responses with <tt>566</tt> SHOULD include a body explaining the planned IPv4 outage
+<t>Responses with <tt>5NN</tt> SHOULD include a body explaining the planned IPv4 outage
 for legacy clients and human readers.</t>
 <t>Operators SHOULD make the body as clear as possible for non-technical readers.
 The body SHOULD NOT assume that the reader understands IPv4, IPv6, or the
@@ -614,26 +690,84 @@ the problem themselves (for example, by changing browser or device settings).
 The body SHOULD briefly explain, in plain language, that the Internet is
 transitioning to a newer protocol generation (IPv6) and that this service may
 not be reachable over the older generation (IPv4) on the reader's network path.
-The body SHOULD give the reader concrete information they can pass to their
-Internet service provider (ISP) or organization IT department --- for example,
-that the site may require IPv6 but their system or network does not appear to
-support it --- and SHOULD ask them to investigate why IPv6 is not working. When
-<tt>IPv4-Unavailable-Until</tt> is present, the body SHOULD state when service over
-the older connection may resume in plain language.</t>
-<t>The following plain-text example is suitable for <tt>Content-Type: text/plain</tt> or
-as the text content of an HTML page as <tt>Content-Type: text/html</tt>:</t>
+When an IPv6-only-reachable alternate URI is published (see
+<xref target="ipv6-only-reachable-alternate-site"></xref>), the body SHOULD present that link before
+suggesting external help: some dual-stack clients keep selecting IPv4 under
+Happy Eyeballs <xref target="RFC8305"></xref> even when IPv6 would work (see
+<xref target="interaction-with-happy-eyeballs"></xref>).
+The body SHOULD NOT imply that the Internet service provider (ISP) is
+necessarily at fault, and SHOULD NOT urge every reader to open a provider
+support ticket: the cause may be the network, the device, or client software
+that prefers the older connection. When further help is appropriate, the body
+MAY suggest trying another browser or device, contacting organization IT if
+available, and contacting the ISP only after those steps if the reader still
+needs help checking whether IPv6 works on their connection.
+Before suggesting ISP contact, the body MAY invite the reader to check whether
+they have working IPv6 connectivity --- for example by visiting a &quot;what is my
+IP&quot; service that reports an IPv6 address, or an IPv6 evaluation site such as
+<xref target="TEST-IPV6"></xref>. Operators that include a third-party diagnostic URI SHOULD pick
+a stable, brand-neutral service they are willing to recommend, and SHOULD NOT
+treat that check as proving the ISP is at fault when the result is mixed (for
+example IPv6 works on a test site but Happy Eyeballs still selects IPv4 for
+the dual-stack name). When <tt>IPv4-Unavailable-Until</tt> is present, the body SHOULD
+state when service over the older connection may resume in plain language.</t>
+
+<section anchor="ipv6-only-reachable-alternate-site"><name>IPv6-Only-Reachable Alternate Site</name>
+<t>When an operator publishes a <strong>distinct hostname or URI that is
+IPv6-only-reachable</strong> --- for example, a name with AAAA records and no usable
+A records, or where IPv4 is deliberately not served --- and that name has a
+valid certificate for HTTPS, the response body <bcp14>SHOULD</bcp14> include a clear
+human-readable link to that URI. For example, a <tt>5NN</tt> response for
+<tt>https://www.example.com/</tt> MAY point users to
+<tt>https://ipv6.example.com/</tt> when the latter is IPv6-only-reachable.</t>
+<t>This link is intended for end users when Happy Eyeballs or other connection
+selection keeps preferring IPv4 on the original dual-stack name: refreshing the
+same hostname may not establish IPv6, while opening an IPv6-only hostname can
+force a native IPv6 path. The alternate URI MUST identify a resource the
+operator intends users to visit (same organization or otherwise expected
+destination). Operators MUST NOT use this guidance as a license for open
+redirects to unrelated third parties.</t>
+<t>Aware clients and automated HTTP clients <bcp14>MUST NOT</bcp14> be required to follow the
+alternate-site link. They continue to apply <tt>Retry-Over-IPv6</tt> on the <strong>same</strong>
+target URI and authority as specified in <xref target="ipv6-retry"></xref>. The link is
+presentation for humans; it does not replace machine-readable retry signaling.</t>
+<t>The following plain-text examples are suitable for <tt>Content-Type: text/plain</tt> or
+as the text content of an HTML page as <tt>Content-Type: text/html</tt>.</t>
+
+<section anchor="body-example-with-ipv6-only-site"><name>Example with an IPv6-only-reachable alternate URI</name>
 <blockquote><t>This site is not available on your current Internet connection.</t>
 <t>The Internet is moving to a newer protocol generation called IPv6. This
 service is not reachable over the older generation (IPv4) on your network.
 You probably cannot fix this yourself.</t>
-<t>Contact your Internet provider or your organization's IT help desk and say:
-&quot;I cannot reach this site --- it may require IPv6, but my system does not seem
-to work with IPv6.&quot; Ask them why IPv6 is not working for you and whether
-they can enable it.</t>
-<t>If this is a planned outage, service over the older connection may resume
-after 7 June 2026, 00:00 UTC.</t>
+<t>If you can open this IPv6-only address in your browser, try:
+<eref target="https://ipv6.example.com/">https://ipv6.example.com/</eref></t>
+<t>If that does not work either, the problem may be your network, your device,
+or your browser --- not necessarily your Internet provider. Some software
+prefers the older connection even when a newer one would work. Try another
+browser or device if you can. You can also check whether IPv6 works for you
+on a &quot;what is my IP&quot; site or an IPv6 test such as <eref target="https://test-ipv6.com/">https://test-ipv6.com/</eref>.
+If you still need help, contact your organization's IT help desk, or ask
+your Internet provider to check whether IPv6 works on your connection.</t>
+<t>Service over the older connection may resume after 7 June 2026, 00:00 UTC.</t>
+</blockquote></section>
+
+<section anchor="body-example-without-ipv6-only-site"><name>Example without an IPv6-only-reachable alternate URI</name>
+<blockquote><t>This site is not available on your current Internet connection.</t>
+<t>The Internet is moving to a newer protocol generation called IPv6. This
+service is not reachable over the older generation (IPv4) on your network.
+You probably cannot fix this yourself.</t>
+<t>The problem may be your network, your device, or your browser --- not
+necessarily your Internet provider. Some software prefers the older
+connection even when a newer one would work. Try another browser or device
+if you can. You can also check whether IPv6 works for you on a &quot;what is my
+IP&quot; site or an IPv6 test such as <eref target="https://test-ipv6.com/">https://test-ipv6.com/</eref>. If you still need
+help, contact your organization's IT help desk, or ask your Internet
+provider to check whether IPv6 works on your connection.</t>
+<t>Service over the older connection may resume after 7 June 2026, 00:00 UTC.</t>
 </blockquote><t>For machine-readable errors, deployments MAY use Problem Details
-<xref target="RFC9457"></xref>, for example:</t>
+<xref target="RFC9457"></xref>, for example (status <tt>566</tt> is the suggested / temporary test value
+for <tt>5NN</tt>). The optional <tt>ipv6OnlySite</tt> member appears only when an
+IPv6-only-reachable alternate URI is published:</t>
 
 <sourcecode type="json"><![CDATA[{
   "type": "about:blank",
@@ -641,19 +775,24 @@ after 7 June 2026, 00:00 UTC.</t>
   "status": 566,
   "detail": "IPv4 unavailable until 2026-06-07T00:00:00Z.",
   "retryOverIPv6": true,
-  "ipv4UnavailableUntil": "2026-06-07T00:00:00Z"
+  "ipv4UnavailableUntil": "2026-06-07T00:00:00Z",
+  "ipv6OnlySite": "https://ipv6.example.com/"
 }
 ]]></sourcecode>
-<t>The <tt>detail</tt> field in Problem Details is primarily for developers and aware
-clients; deployments SHOULD still provide a separate human-oriented body (plain
-text or HTML) with the guidance above when the response may be shown to end
-users.</t>
+<t>Omit <tt>ipv6OnlySite</tt> when no such alternate URI is available. The member is for
+presentation layers that render Problem Details to users. It is not a
+substitute for <tt>Retry-Over-IPv6</tt>. The <tt>detail</tt> field is primarily for
+developers and aware clients; deployments SHOULD still provide a separate
+human-oriented body (plain text or HTML) with the guidance above when the
+response may be shown to end users.</t>
+</section>
+</section>
 </section>
 
 <section anchor="client-requirements"><name>Client Requirements</name>
 
-<section anchor="processing-566"><name>Processing 566</name>
-<t>When a client receives <tt>566</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>):</t>
+<section anchor="processing-5nn"><name>Processing 5NN</name>
+<t>When a client receives <tt>5NN</tt> (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>):</t>
 
 <ol spacing="compact">
 <li>If the client knows the response arrived on an IPv4 connection, it SHOULD
@@ -672,23 +811,23 @@ based on a late IPv4 response.</li>
 consistent with the lifecycle described in <xref target="retry-over-ipv6-recovery"></xref>. The
 retry MUST use the same method, target URI, and authority. The client SHOULD force address-family selection to IPv6 for this
 retry. The client MUST NOT change the host, scheme, or port solely because of
-<tt>566</tt> or <tt>Retry-Over-IPv6</tt>.</t>
+<tt>5NN</tt> or <tt>Retry-Over-IPv6</tt>.</t>
 </section>
 
 <section anchor="client-idempotent-methods"><name>Idempotent Methods</name>
-<t>Aware clients that receive <tt>566</tt> (or transitional <tt>503</tt> with
+<t>Aware clients that receive <tt>5NN</tt> (or transitional <tt>503</tt> with
 <tt>Retry-Over-IPv6: ?1</tt>) SHOULD retry the same method, target URI, and body over
 IPv6 (see <xref target="ipv6-retry"></xref>). For safe methods <xref target="RFC9110"></xref>, such a retry is
 generally acceptable. For non-idempotent methods such as <tt>POST</tt>, the same retry
 can cause duplicate processing --- for example, a duplicate payment, order, or
 database insert. Responding entities and operators SHOULD follow the guidance in
-<xref target="idempotent-methods"></xref> on when not to send <tt>566</tt> for such requests.</t>
+<xref target="idempotent-methods"></xref> on when not to send <tt>5NN</tt> for such requests.</t>
 </section>
 
 <section anchor="loop-prevention"><name>Loop Prevention</name>
 <t>The client MUST NOT perform more than one IPv4-to-IPv6 retry per logical
-request attempt triggered by <tt>566</tt> or <tt>Retry-Over-IPv6</tt>.</t>
-<t>After receiving <tt>566</tt>, the client SHOULD prefer IPv6 for subsequent connections
+request attempt triggered by <tt>5NN</tt> or <tt>Retry-Over-IPv6</tt>.</t>
+<t>After receiving <tt>5NN</tt>, the client SHOULD prefer IPv6 for subsequent connections
 to the authority until <tt>IPv4-Unavailable-Until</tt> (if present) or for a default
 period (for example, 10 minutes).</t>
 <t>If the IPv6 retry fails with connectivity errors, the client SHOULD apply
@@ -703,7 +842,7 @@ calling application for logging and support tickets.</t>
 </section>
 
 <section anchor="recovery-signaling"><name>Recovery Signaling</name>
-<t>On the first successful IPv6 request following a fully received <tt>566</tt> over IPv4,
+<t>On the first successful IPv6 request following a fully received <tt>5NN</tt> over IPv4,
 the client SHOULD send <tt>Retry-Over-IPv6-Recovery: recovered</tt> and SHOULD echo
 <tt>Retry-Over-IPv6-Token</tt> in the <tt>token</tt> parameter when a token was provided.</t>
 </section>
@@ -718,8 +857,8 @@ operators SHOULD not assume all &quot;IPv4&quot; clients can switch address fami
 
 <section anchor="server-and-operational-considerations"><name>Server and Operational Considerations</name>
 
-<section anchor="when-to-send-566"><name>When to Send 566</name>
-<t>The responding entity SHOULD send <tt>566</tt> when:</t>
+<section anchor="when-to-send-5nn"><name>When to Send 5NN</name>
+<t>The responding entity SHOULD send <tt>5NN</tt> when:</t>
 
 <ul spacing="compact">
 <li>IPv4 HTTP service for the authority is intentionally unavailable;</li>
@@ -728,7 +867,7 @@ operators SHOULD not assume all &quot;IPv4&quot; clients can switch address fami
 <li>For non-idempotent methods, duplicate processing of an IPv6 retry is
 acceptable or prevented (see <xref target="idempotent-methods"></xref>).</li>
 </ul>
-<t>The responding entity MAY omit <tt>566</tt> (and the transitional <tt>503</tt> with
+<t>The responding entity MAY omit <tt>5NN</tt> (and the transitional <tt>503</tt> with
 <tt>Retry-Over-IPv6</tt>) for requests received on the IPv4 loopback interface --- for
 example, when the client-facing connection uses addresses in <tt>127.0.0.0/8</tt>
 such as <tt>127.0.0.1</tt>. Routable IPv4 service may be disabled during a planned
@@ -737,20 +876,20 @@ administration; those clients do not need a signal to retry over IPv6.</t>
 <t>Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service. Operators on the open Internet <bcp14>SHOULD</bcp14> follow
-<xref target="intended-deployment"></xref> before enabling <tt>566</tt> policy.</t>
+<xref target="intended-deployment"></xref> before enabling <tt>5NN</tt> policy.</t>
 </section>
 
 <section anchor="idempotent-methods"><name>Idempotent Methods and Duplicate Processing</name>
 <t>As described in <xref target="client-idempotent-methods"></xref>, aware clients SHOULD retry after
-<tt>566</tt>, including for non-idempotent methods --- which can cause duplicate
+<tt>5NN</tt>, including for non-idempotent methods --- which can cause duplicate
 processing. Clients cannot generally determine whether a given application or
 resource tolerates duplicate processing. Responding entities MUST NOT assume that
 end-user clients will suppress IPv6 retries for non-idempotent methods.</t>
-<t>A <tt>566</tt> response does <strong>not</strong> guarantee that the first request had no effect.
+<t>A <tt>5NN</tt> response does <strong>not</strong> guarantee that the first request had no effect.
 Duplicate risk arises when:</t>
 
 <ul spacing="compact">
-<li><strong><tt>566</tt> is generated at an edge or load balancer</strong> while an origin server
+<li><strong><tt>5NN</tt> is generated at an edge or load balancer</strong> while an origin server
 already started or completed processing the request on the IPv4 path.</li>
 <li><strong>Policy races during rollout</strong> --- IPv4-unavailability policy may be enabled or
 disabled while requests are in flight.</li>
@@ -759,15 +898,15 @@ disabled while requests are in flight.</li>
 work without deduplication at the application layer (see
 <xref target="interaction-with-happy-eyeballs"></xref>).</li>
 </ul>
-<t>Because of this uncertainty, the responding entity <bcp14>SHOULD NOT</bcp14> send <tt>566</tt>
+<t>Because of this uncertainty, the responding entity <bcp14>SHOULD NOT</bcp14> send <tt>5NN</tt>
 (or <tt>503</tt> with <tt>Retry-Over-IPv6: ?1</tt>) for non-idempotent methods such as
 <tt>POST</tt> when an IPv6 retry of the same request would cause unacceptable duplicate
 side effects, unless the application provides deduplication (for example, an
 idempotency key), a request identifier, or another mechanism that makes the
 retry safe. Where duplicate processing is unacceptable and no such mechanism
-exists, <strong>omitting <tt>566</tt> MAY be preferable</strong> to signaling a retry the client
+exists, <strong>omitting <tt>5NN</tt> MAY be preferable</strong> to signaling a retry the client
 cannot safely evaluate.</t>
-<t>Operators SHOULD prefer applying <tt>566</tt> to idempotent methods during outage
+<t>Operators SHOULD prefer applying <tt>5NN</tt> to idempotent methods during outage
 tests. APIs that must remain available for non-idempotent methods through a
 planned IPv4 outage SHOULD document and implement application-level
 deduplication or other safe-retry semantics explicitly.</t>
@@ -786,8 +925,8 @@ backends:</t>
 
 <tbody>
 <tr>
-<td>566 count</td>
-<td><tt>566</tt> responses logged with optional token</td>
+<td>5NN count</td>
+<td><tt>5NN</tt> responses logged with optional token</td>
 </tr>
 
 <tr>
@@ -801,8 +940,8 @@ backends:</t>
 </tr>
 
 <tr>
-<td>Unrecovered 566</td>
-<td><tt>566 count - paired recoveries</tt> (estimated hard fail and legacy clients)</td>
+<td>Unrecovered 5NN</td>
+<td><tt>5NN count - paired recoveries</tt> (estimated hard fail and legacy clients)</td>
 </tr>
 </tbody>
 </table><t>Hard-failure counts are estimates: clients with no IPv6 path cannot send
@@ -815,10 +954,10 @@ signaling entity is likely OK; a good result <strong>at that hop</strong>.</li>
 <li><strong>High soft-failure rate with elevated origin 5xx or latency</strong> --- possible
 <strong>split-stack</strong> deployment: clients reached IPv6 at the edge while backends or
 internal hops still depend on IPv4 (see <xref target="split-stack-deployments"></xref>).</li>
-<li><strong>Low recovery relative to <tt>566</tt> count</strong> --- hard failures, legacy clients, or
+<li><strong>Low recovery relative to <tt>5NN</tt> count</strong> --- hard failures, legacy clients, or
 clients without an IPv6 path.</li>
 </ul>
-<t>Operators <bcp14>SHOULD</bcp14> correlate edge <tt>566</tt> and recovery metrics with <strong>origin,
+<t>Operators <bcp14>SHOULD</bcp14> correlate edge <tt>5NN</tt> and recovery metrics with <strong>origin,
 worker, and downstream dependency</strong> health during an outage window, not rely on
 edge metrics alone.</t>
 <t>The responding entity SHOULD log recovery headers but MUST NOT alter the
@@ -827,14 +966,14 @@ response based on them.</t>
 
 <section anchor="cdn-and-reverse-proxy-deployment"><name>CDN and Reverse Proxy Deployment</name>
 <t>When an edge terminates client IPv4 and connects to an origin over IPv6, the
-<strong>edge</strong> sends <tt>566</tt> to the client when IPv4 to the edge is disabled --- not
-necessarily the origin application. The entity that generates <tt>566</tt> MUST know
+<strong>edge</strong> sends <tt>5NN</tt> to the client when IPv4 to the edge is disabled --- not
+necessarily the origin application. The entity that generates <tt>5NN</tt> MUST know
 the client-facing address family.</t>
 <t>When ingress <strong>terminates IPv6</strong> from clients but uses <strong>IPv4 toward
 origin servers or pods</strong>, disabling IPv4 <strong>to the edge</strong> exercises client paths;
 disabling IPv4 on an <strong>internal HTTP gateway</strong> (ingress-to-origin, API gateway,
 or service-mesh ingress) exercises <strong>service-to-service</strong> HTTP that still uses
-operator-controlled hostnames. The same <tt>566</tt> semantics apply on each hop where
+operator-controlled hostnames. The same <tt>5NN</tt> semantics apply on each hop where
 IPv4 is intentionally unavailable.</t>
 </section>
 
@@ -843,8 +982,8 @@ IPv4 is intentionally unavailable.</t>
 <strong>pod or cluster networks remain IPv4-only</strong> (or use IPv6 only for ULA or
 translation, not for the paths clients use). Platform IPv6 inside the cluster
 often lags public dual-stack at the edge.</t>
-<t><tt>566</tt> is emitted based on the <strong>client-facing transport</strong> at the responding
-entity (see <xref target="when-to-send-566"></xref>). It does <strong>not</strong> probe east-west paths,
+<t><tt>5NN</tt> is emitted based on the <strong>client-facing transport</strong> at the responding
+entity (see <xref target="when-to-send-5nn"></xref>). It does <strong>not</strong> probe east-west paths,
 sidecars, background workers, or callbacks that use cluster-internal IPv4 names
 or addresses.</t>
 <t>A drill can therefore show <strong>high soft-failure rates</strong> (the client retried over
@@ -852,7 +991,7 @@ IPv6 and received success from the load balancer) while <strong>internal HTTP</s
 depends on IPv4 and fails or degrades downstream.</t>
 <t>Operators <bcp14>SHOULD</bcp14> treat edge-only drills as <strong>necessary but not sufficient</strong>
 for IPv6-only readiness. Operators <bcp14>SHOULD</bcp14> extend staged outages to <strong>internal
-HTTP gateways</strong> where policy applies and <bcp14>SHOULD</bcp14> correlate edge <tt>566</tt> and
+HTTP gateways</strong> where policy applies and <bcp14>SHOULD</bcp14> correlate edge <tt>5NN</tt> and
 recovery metrics with origin and downstream error rates during the window, as
 described in <xref target="measuring-outage-impact"></xref>.</t>
 </section>
@@ -863,8 +1002,8 @@ unguessable, short-lived, and loggable without affinity to the issuing server.</
 </section>
 
 <section anchor="transitional-fallback"><name>Transitional Fallback</name>
-<t>Deployments that cannot emit <tt>566</tt> MAY use <tt>503 Service Unavailable</tt> with
-<tt>Retry-Over-IPv6: ?1</tt> and <tt>IPv4-Unavailable-Until</tt> until <tt>566</tt> support is
+<t>Deployments that cannot emit <tt>5NN</tt> MAY use <tt>503 Service Unavailable</tt> with
+<tt>Retry-Over-IPv6: ?1</tt> and <tt>IPv4-Unavailable-Until</tt> until <tt>5NN</tt> support is
 available.</t>
 </section>
 </section>
@@ -878,24 +1017,24 @@ across HTTP versions. Deployment considerations differ mainly in how connections
 are managed:</t>
 
 <ul spacing="compact">
-<li><strong>HTTP/1.1</strong> --- A <tt>566</tt> response typically applies to one request on a single
+<li><strong>HTTP/1.1</strong> --- A <tt>5NN</tt> response typically applies to one request on a single
 TCP connection. The client closes that IPv4 connection before retrying over
 IPv6, as described in <xref target="connection-lifecycle"></xref>.</li>
-<li><strong>HTTP/2</strong> --- <tt>566</tt> is a connection-level signal for that TCP connection. A
+<li><strong>HTTP/2</strong> --- <tt>5NN</tt> is a connection-level signal for that TCP connection. A
 client SHOULD close the IPv4 HTTP/2 connection (affecting all streams on it)
-before opening an IPv6 connection for the retry. Servers SHOULD emit <tt>566</tt> on
+before opening an IPv6 connection for the retry. Servers SHOULD emit <tt>5NN</tt> on
 every IPv4 HTTP/2 connection that receives a request during an outage, not
 only on the first stream.</li>
 <li><strong>HTTP/3</strong> --- The same semantics apply on a QUIC connection to the authority.
 HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY
 hold concurrent connections of different HTTP versions and address families.
-A <tt>566</tt> received on an IPv4 QUIC connection does not automatically invalidate
+A <tt>5NN</tt> received on an IPv4 QUIC connection does not automatically invalidate
 an existing IPv6 HTTP/3 connection, but the client MUST still apply
-<xref target="ipv6-retry"></xref> when the logical request attempt that received <tt>566</tt> has not yet
+<xref target="ipv6-retry"></xref> when the logical request attempt that received <tt>5NN</tt> has not yet
 succeeded over IPv6.</li>
 </ul>
 <t>Clients that discover HTTP/3 via <tt>Alt-Svc</tt> or similar mechanisms on an IPv4
-connection still need to evaluate <tt>566</tt> and <tt>Retry-Over-IPv6</tt> before treating the
+connection still need to evaluate <tt>5NN</tt> and <tt>Retry-Over-IPv6</tt> before treating the
 request as a general failure. Operators SHOULD configure load balancers and
 origins to emit the same signaling on all HTTP versions they expose.</t>
 </section>
@@ -906,7 +1045,7 @@ header is absent (<xref target="GRPC-HTTP-MAPPING"></xref>). That table maps <tt
 Unavailable</tt> (and selected gateway timeouts and overload responses) to
 <tt>UNAVAILABLE</tt>; it maps <tt>400 Bad Request</tt> to <tt>INTERNAL</tt> and assigns <tt>UNKNOWN</tt>
 to most other codes, including unregistered 5xx values. Implementations that
-support this document SHOULD map HTTP <tt>566</tt> to <tt>UNAVAILABLE</tt>, the same as
+support this document SHOULD map HTTP <tt>5NN</tt> to <tt>UNAVAILABLE</tt>, the same as
 <tt>503</tt>, and SHOULD inspect <tt>Retry-Over-IPv6</tt> on the HTTP response before
 aggregating multi-address connection errors, so that an IPv4 policy signal is
 not confused with IPv6 connectivity failure.</t>
@@ -949,7 +1088,7 @@ not blindly retry the same address list.</t>
 </tr>
 
 <tr>
-<td>HTTP 566 + headers (this document)</td>
+<td>HTTP 5NN + headers (this document)</td>
 <td>Reversible at LB; structured retry; measurable soft/hard fail; measures client-to-signaling-entity path only</td>
 </tr>
 </tbody>
@@ -978,8 +1117,13 @@ random nonce and protect the value with a keyed authenticator (such as an HMAC)
 using a secret shared across the load-balanced fleet. Such validation is for
 operational filtering only; clients MUST NOT interpret token structure, and
 token validation does not authenticate the client or the recovery signal.</t>
-<t><tt>566</tt> responses that depend on the client-facing address family SHOULD use
+<t><tt>5NN</tt> responses that depend on the client-facing address family SHOULD use
 <tt>Cache-Control: private, no-store</tt> when appropriate to avoid cache poisoning.</t>
+<t>IPv6-only-reachable alternate site links in the response body (see
+<xref target="response-body"></xref>) are advisory for human readers. Clients MUST NOT treat such
+links as automatic redirects without user action. Operators MUST ensure
+alternate URIs use valid certificates for the advertised name and MUST NOT
+point users to untrusted third-party destinations.</t>
 <t>This mechanism does not by itself provide confidentiality or integrity for
 retried requests. Any security properties depend on the underlying transport and
 application protocol in use.</t>
@@ -990,7 +1134,14 @@ application protocol in use.</t>
 
 <section anchor="http-status-code"><name>HTTP Status Code</name>
 <t>In the &quot;Hypertext Transfer Protocol (HTTP) Status Code Registry&quot;
-(<eref target="https://www.iana.org/assignments/http-status-codes/">https://www.iana.org/assignments/http-status-codes/</eref>):</t>
+(<eref target="https://www.iana.org/assignments/http-status-codes/">https://www.iana.org/assignments/http-status-codes/</eref>), IANA is requested to
+assign a 5xx status code for <strong>IPv4 Unavailable</strong>, referenced as <tt>5NN</tt> in this
+document until a concrete value is assigned (Section 16.2.2 of <xref target="RFC9110"></xref>).</t>
+<t>This document <strong>suggests the value 566</strong> if it remains unassigned, for alignment
+with the 6/6 mnemonic used in coordinated IPv6 deployment events. IANA MAY
+assign a different unused code in the 5xx range if 566 is unavailable or
+inappropriate. Provisional implementations and examples in this document use
+566 as a temporary test value representing <tt>5NN</tt>.</t>
 <table>
 <thead>
 <tr>
@@ -1002,7 +1153,7 @@ application protocol in use.</t>
 
 <tbody>
 <tr>
-<td>566</td>
+<td>5NN (suggested: 566)</td>
 <td>IPv4 Unavailable</td>
 <td>This document</td>
 </tr>
@@ -1055,7 +1206,8 @@ application protocol in use.</t>
 </section>
 
 <section anchor="examples"><name>Examples</name>
-<t>This section is informative.</t>
+<t>This section is informative. Wire examples use <tt>566</tt> as the suggested /
+temporary test value for <tt>5NN</tt> pending IANA assignment.</t>
 
 <section anchor="dual-stack-browser"><name>Dual-Stack Browser</name>
 <t>A browser receives:</t>
@@ -1071,6 +1223,9 @@ without displaying an error page.</t>
 </section>
 
 <section anchor="legacy-browser-with-html-body"><name>Legacy Browser with HTML Body</name>
+<t>The following example includes an IPv6-only-reachable alternate URI. When no
+such URI is published, omit the corresponding paragraph (see
+<xref target="body-example-without-ipv6-only-site"></xref>).</t>
 
 <sourcecode type="http"><![CDATA[HTTP/1.1 566 IPv4 Unavailable
 Retry-After: 86400
@@ -1080,12 +1235,23 @@ Content-Type: text/html; charset=utf-8
 Internet connection.</p><p>The Internet is moving to a newer protocol
 generation called IPv6. This service is not reachable over the older
 generation (IPv4) on your network. You probably cannot fix this
-yourself.</p><p>Contact your Internet provider or your organization's
-IT help desk and say:
-&quot;I cannot reach this site --- it may require IPv6, but my system
-does not seem to work with IPv6.&quot; Ask them
-why IPv6 is not working for you and whether they can enable it.</p>
-<p>If this is a planned outage, service over the older connection may
+yourself.</p><p>If you can open this IPv6-only address in your
+browser, try:</p>
+<p><a
+href="https://ipv6.example.com/"
+>https://ipv6.example.com/</a></p>
+<p>If that does not work either, the problem may be your
+network, your device, or your browser --- not necessarily
+your Internet provider. Some software prefers the older
+connection even when a newer one would work. Try another
+browser or device if you can. You can also check whether
+IPv6 works for you on a &quot;what is my IP&quot; site or an IPv6
+test such as <a href="https://test-ipv6.com/"
+>https://test-ipv6.com/</a>. If you still need help,
+contact your organization's IT help desk, or ask your
+Internet provider to check whether IPv6 works on your
+connection.</p>
+<p>Service over the older connection may
 resume after 7 June 2026, 00:00 UTC.</p></body></html>
 ]]></sourcecode>
 </section>
@@ -1114,7 +1280,7 @@ Retry-Over-IPv6-Recovery: recovered; token="abc123"
 imply stack-wide IPv6 readiness</strong> (see <xref target="split-stack-deployments"></xref>).</t>
 
 <ol spacing="compact">
-<li>A dual-stack client connects to public ingress over IPv4 and receives <tt>566</tt>
+<li>A dual-stack client connects to public ingress over IPv4 and receives <tt>5NN</tt>
 with <tt>Retry-Over-IPv6: ?1</tt>.</li>
 <li>The client retries over IPv6; ingress returns <tt>200 OK</tt> with
 <tt>Retry-Over-IPv6-Recovery</tt> --- a <strong>soft failure</strong> at the edge.</li>
@@ -1198,6 +1364,14 @@ metrics alone when internal paths were not exercised.</t>
 </reference>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9111.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9457.xml"/>
+<reference anchor="TEST-IPV6" target="https://test-ipv6.com/">
+  <front>
+    <title>Test your IPv6</title>
+    <author>
+      <organization>test-ipv6.com</organization>
+    </author>
+  </front>
+</reference>
 <reference anchor="WA-EA-04" target="https://watech.wa.gov/policies/internet-protocol-version-6-ipv6-implementation-policy">
   <front>
     <title>Internet Protocol Version 6 (IPv6) Implementation Policy</title>

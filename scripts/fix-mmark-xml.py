@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Post-process mmark XML for idnits and RFC 7991 compliance.
+"""Post-process mmark XML for idnits.
 
-mmark v2 wraps normative and informative reference sections in an outer
-<references><name>References</name> element. idnits rejects that wrapper;
-only Normative References and Informative References are valid section names.
+1. Unwrap mmark's outer <references><name>References</name> (invalid for idnits).
+2. Drop rfc submissionType when Datatracker has stream=null for this draft
+   (individual I-Ds); otherwise idnits reports SUBMISSION_TYPE_UNEXPECTED.
 """
 
 from __future__ import annotations
@@ -14,12 +14,6 @@ from pathlib import Path
 
 
 def fix_submission_type(text: str) -> str:
-    """Drop rfc submissionType when Datatracker has no stream for the draft.
-
-    idnits errors on -01+ submissions if submissionType is set but the prior
-    version on Datatracker has stream=null (common for individual I-Ds).
-    seriesInfo stream is unchanged.
-    """
     return re.sub(r'(<rfc[^>]*)\s+submissionType="[^"]*"', r"\1", text, count=1)
 
 

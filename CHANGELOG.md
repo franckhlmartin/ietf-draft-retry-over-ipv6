@@ -9,6 +9,29 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+## [draft-martin-retry-over-ipv6-03] - 2026-07-19
+
+- **Intended deployment (§1.3):** soften public-Internet guidance from
+  **SHOULD NOT** to use-with-care (annoyance, support load, advance notice);
+  note that even controlled environments need a shared signal because operators
+  do not control all software and libraries.
+- **About This Document:** removable note with GitHub source, Datatracker,
+  v6ops discussion, httpbis expert input; tests use `566`, prose uses `5NN`.
+- **Status code:** normative `5NN` placeholder per RFC 9110 §16.2.2; soft-request
+  IANA assign **566**; 505 analogy; expanded new-status-code checklist (scope,
+  content, cacheability); why not 3xx (no IPv6-only URI flag, loop risk,
+  DNS/cert cost, IPv4-only clients get connection failures not logged HTTP errors).
+- **Response body:** optional IPv6-only-reachable alternate site link for humans
+  (examples use `example.com` / `ipv6.example.com` per RFC 2606); separate
+  example bodies with and without that link; moderate ISP-help wording so
+  Happy Eyeballs / client preference is not blamed on the provider; MAY
+  suggest a "what is my IP" or IPv6 evaluation check (e.g. test-ipv6.com);
+  machines keep same-authority `Retry-Over-IPv6`.
+- **IANA / Security:** soft-request wording; advisory-link security notes.
+- **Build:** set `consensus = true` in the Markdown title block (mmark);
+  wrap long HTML example URL in the draft text.
+- Version bump to `-03`.
+
 ## [draft-martin-retry-over-ipv6-02] - 2026-06-30
 
 - **Status code selection (§3.1):** informative rationale for 5xx class vs
