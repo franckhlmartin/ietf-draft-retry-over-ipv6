@@ -3,17 +3,23 @@
 **IETF Internet-Draft:** Versions `-00` (2026-06-06) and `-01` (2026-06-11) have
 been submitted to the IETF and are tracked on the
 [IETF Datatracker](https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/).
-The repository currently builds **`-03`** from `draft-martin-retry-over-ipv6.md`.
+The repository currently builds **`-04`** from `draft-martin-retry-over-ipv6.md`.
 
 This repository contains the source for the IETF Internet-Draft:
 **"HTTP Signaling of Planned IPv4 Unavailability"**.
 
 **Source of truth:** `draft-martin-retry-over-ipv6.md` is the only authoritative
-source. The repository also includes generated `draft-martin-retry-over-ipv6-03.xml`,
+source. The repository also includes generated `draft-martin-retry-over-ipv6-04.xml`,
 `.txt`, and `.html` files so you can read the draft on GitHub without building
 locally. Those copies may be out of date if someone edits the Markdown without
 running `make` and committing the outputs; when in doubt, build from the `.md`
 file or trust the version on the IETF Datatracker after submission.
+
+## Server configuration examples
+
+Informative (non-normative) configs for emitting `503` + `Retry-Over-IPv6`
+signaling live under [`docs/`](docs/README.md), with one guide per server
+([NGINX](docs/nginx.md), [Apache](docs/apache.md)).
 
 ## Building
 
@@ -34,7 +40,7 @@ make clean-all # also remove the local .venv
 
 Before submitting, run `make` and commit the updated `.xml`, `.txt`, and `.html`
 if you want the GitHub copies to stay in sync. The submission file is
-`draft-martin-retry-over-ipv6-03.xml`. Upload it to the
+`draft-martin-retry-over-ipv6-04.xml`. Upload it to the
 [IETF Datatracker submission tool](https://datatracker.ietf.org/submit/).
 
 When editing the Markdown source, use [mmark](https://github.com/mmarkdown/mmark)

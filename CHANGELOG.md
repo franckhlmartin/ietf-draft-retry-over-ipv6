@@ -7,7 +7,27 @@ Formatting-only edits are omitted unless they affect published semantics.
 `draft-martin-retry-over-ipv6-01` (2026-06-11) are on the
 [IETF Datatracker](https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/).
 
-## Unreleased
+## [draft-martin-retry-over-ipv6-04] - 2026-07-28
+
+- **Introduction:** note DNS/network IPv4 withdrawal is all-or-nothing for blast
+  radius; HTTP-layer signaling can limit exposure per host/path/slice.
+- **Semantic pivot:** drop the proposed `5NN` / `566` status code. Planned IPv4
+  unavailability is signaled with existing **`503 Service Unavailable`** plus
+  **mandatory** `Retry-Over-IPv6: ?1`.
+- **Design alternatives (§):** informative discussion of new status code,
+  `503`+`Retry-After` only, `500`+body, dedicated media type without headers,
+  `3xx`, and `421`; document why headers + `503` + Problem Details `type` wins.
+- **Problem Details:** register `urn:ietf:params:problem:ipv4-unavailable`;
+  prefer `application/problem+json` (no new media type). Headers remain the
+  primary machine trigger for address-family retry.
+- **IANA:** remove HTTP status code registration; keep field names; add problem
+  type registration. Cite RFC 9457 as normative for the problem type.
+- **Ops/metrics:** note that `503` alone mixes with overload; count the header
+  (or a custom metric). Prometheus/Grafana do not auto-parse problem+json.
+- **gRPC:** rely on existing `503`→`UNAVAILABLE` mapping; honor
+  `Retry-Over-IPv6` before same-path retry.
+- **Docs:** server examples (`docs/`) updated from `566` to `503`+headers.
+- Version bump to `-04`.
 
 ## [draft-martin-retry-over-ipv6-03] - 2026-07-19
 

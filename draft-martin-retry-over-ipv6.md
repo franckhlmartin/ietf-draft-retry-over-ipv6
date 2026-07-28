@@ -7,11 +7,11 @@ workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 consensus = true
 
-date = 2026-07-19
+date = 2026-07-28
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-martin-retry-over-ipv6-03"
+value = "draft-martin-retry-over-ipv6-04"
 stream = "IETF"
 status = "standard"
 
@@ -29,18 +29,20 @@ organization = "Peachymango.org"
 As operators transition services to IPv6-only, planned IPv4 outages help identify
 remaining dependencies before permanent decommission. Such outages must be
 measurable, reversible, and understandable to end users. This document defines
-the `5NN` (IPv4 Unavailable) HTTP response status code and associated header
-fields that signal an intentional, often time-bounded IPv4 outage, instruct
-aware clients to retry over IPv6 after closing the IPv4 connection, and allow
-clients to confirm successful IPv6 recovery via an optional correlation token
-so operators can distinguish soft failures from hard failures in centralized
-logs. The mechanism supports staged enterprise rollouts, internal HTTP services,
-and permanent IPv6-only migration; coordinated public events (for example, 6/6
-drills) remain possible with advance notice. The primary intended deployment is
-operator-controlled environments where provider and users share operational
-responsibility. Legacy clients that do not implement this specification treat an unrecognized
-`5NN` status code as an internal server error and MAY use the response body for
-human-readable guidance.
+HTTP signaling for an intentional, often time-bounded IPv4 outage: the existing
+`503 Service Unavailable` status code together with the mandatory
+`Retry-Over-IPv6` response header field (and optional related fields) that
+instruct aware clients to retry over IPv6 after closing the IPv4 connection, and
+allow clients to confirm successful IPv6 recovery via an optional correlation
+token so operators can distinguish soft failures from hard failures in
+centralized logs. Machine-readable response bodies MAY use Problem Details
+(RFC 9457) with a registered problem type URI. The mechanism supports staged
+enterprise rollouts, internal HTTP services, and permanent IPv6-only migration;
+coordinated public events (for example, 6/6 drills) remain possible with advance
+notice. The primary intended deployment is operator-controlled environments
+where provider and users share operational responsibility. Legacy clients that
+do not implement this specification treat the response as ordinary service
+unavailability and MAY use the response body for human-readable guidance.
 
 .# About This Document
 
@@ -60,11 +62,10 @@ the HTTP Working Group (httpbis).
 Source for this draft and an issue tracker can be found at
 https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6.
 
-Interim implementations and tests currently use status code `566` as a concrete
-stand-in for the `5NN` (IPv4 Unavailable) code defined in this document. IANA
-may assign a different 5xx value; this document therefore refers to `5NN` until
-assignment, as recommended for new status codes in Section 16.2.2 of RFC 9110.
-This document suggests `566` if that value remains available.
+This revision (`-04`) no longer proposes a new HTTP status code. Planned IPv4
+unavailability is signaled with `503 Service Unavailable` and
+`Retry-Over-IPv6: ?1`. Earlier revisions used a provisional `5NN` / `566`
+stand-in; that approach is discussed only as a design alternative.
 
 {mainmatter}
 
@@ -115,6 +116,10 @@ Network-layer IPv4 removal is a poor fit for staged drills:
 
 * Rollback is hard --- routing, ACL, and DNS changes propagate slowly and are
   error-prone under pressure.
+* Blast radius is all-or-nothing --- withdrawing A records (or equivalent DNS
+  changes) typically affects every client that resolves the name, or none; there
+  is no fine-grained way to limit exposure to a canary cohort, percentage of
+  traffic, or single application while leaving others on IPv4.
 * End users lack context --- a silent timeout looks like a site outage, not an
   IPv4-path policy.
 * Impact is unmeasured --- without an HTTP-visible signal, operators cannot count
@@ -123,16 +128,19 @@ Network-layer IPv4 removal is a poor fit for staged drills:
 
 HTTP-layer IPv4 outages address these gaps:
 
-* **Easy rollback** --- disable the `5NN` policy at the load balancer or origin
-  without waiting for DNS TTL expiry.
+* **Easy rollback** --- disable the IPv4-unavailability policy at the load
+  balancer or origin without waiting for DNS TTL expiry.
+* **Controlled blast radius** --- enable the signal per virtual host, path,
+  method, or traffic slice at the edge without changing DNS for the whole
+  authority.
 * **Advance communication** --- site banners, email, and status pages can
   reference the same window as `IPv4-Unavailable-Until`.
 * **Clear user messaging** --- a response body explains that IPv4 is
   intentionally unavailable, when service may resume, and what the reader can
   try next (including an IPv6-only link when published).
-* **Operator metrics** --- count `5NN` responses and join them with
-  `Retry-Over-IPv6-Recovery` (and optional tokens) in centralized logs to
-  estimate soft versus hard failure rates.
+* **Operator metrics** --- count responses that carry `Retry-Over-IPv6: ?1`
+  and join them with `Retry-Over-IPv6-Recovery` (and optional tokens) in
+  centralized logs to estimate soft versus hard failure rates.
 
 ## Scope
 
@@ -149,11 +157,12 @@ defining those signals is out of scope for this document.
 
 ## Intended Deployment {#intended-deployment}
 
-Operators deploying planned IPv4 outages with `5NN` signaling on the **public
+Operators deploying planned IPv4 outages with this signaling on the **public
 Internet** SHOULD do so with care. Public use can annoy users: legacy clients
-treat an unrecognized `5NN` as `500 Internal Server Error`, aware clients must
-close the IPv4 connection and retry, and users on IPv4-only paths see an error
-even when the service remains available over IPv6 on other paths. Unannounced
+treat `503 Service Unavailable` as a general outage (and may wait and retry on
+IPv4 if `Retry-After` is present), aware clients must close the IPv4 connection
+and retry over IPv6, and users on IPv4-only paths see an error even when the
+service remains available over IPv6 on other paths. Unannounced
 or frequent public drills can increase support load and reputational risk.
 Operators SHOULD weigh those effects against the operational value of the
 signal, prefer advance notice, and limit duration and frequency where impact on
@@ -184,10 +193,11 @@ Public Internet use **MAY** remain appropriate for time-bounded, widely
 communicated events (for example, 6/6 drills) when advance user communication is
 proportional to expected impact.
 
-This specification is HTTP-version-agnostic: the status code, header fields, and
-client behavior apply equally to HTTP/1.1 [@!RFC9112], HTTP/2 [@!RFC9113], and
-HTTP/3 [@!RFC9114], as they are defined in terms of HTTP semantics
-[@!RFC9110]. Wire-format examples use HTTP/1.1 message syntax for readability.
+This specification is HTTP-version-agnostic: the status code usage, header
+fields, and client behavior apply equally to HTTP/1.1 [@!RFC9112], HTTP/2
+[@!RFC9113], and HTTP/3 [@!RFC9114], as they are defined in terms of HTTP
+semantics [@!RFC9110]. Wire-format examples use HTTP/1.1 message syntax for
+readability.
 Implementations MUST determine whether a request was received over IPv4 at the
 transport layer (TCP for HTTP/1.1 and HTTP/2, QUIC for HTTP/3), not from the
 HTTP version alone.
@@ -244,189 +254,211 @@ in this document.
 
 **Legacy client**: A client that does not implement this document.
 
-**Soft failure**: A client receives `5NN` (or transitional `503` with
-`Retry-Over-IPv6`) over IPv4 and subsequently completes the same request
+**Soft failure**: A client receives `503 Service Unavailable` with
+`Retry-Over-IPv6: ?1` over IPv4 and subsequently completes the same request
 successfully over IPv6. Soft and hard failure classification is **per aware
-client and per signaling hop** (the entity that returned `5NN`), not
+client and per signaling hop** (the entity that returned the signal), not
 end-to-end application success. A soft failure does not guarantee that
 downstream processing (for example, origin work reached over an IPv4-only pod
 network) succeeded.
 
-**Hard failure**: A client receives `5NN` over IPv4 but cannot successfully
-complete the request over IPv6.
+**Hard failure**: A client receives `503` with `Retry-Over-IPv6: ?1` over IPv4
+but cannot successfully complete the request over IPv6.
+
+**IPv4-unavailability signal**: A `503 Service Unavailable` response that
+includes `Retry-Over-IPv6: ?1`, sent only on an IPv4 client-facing connection
+when IPv6 service for the authority is expected to remain available.
 
 # Overview
 
 When IPv4 service is intentionally unavailable for an authority, the responding
 entity that receives a request over IPv4 sends:
 
-1. **`5NN` (IPv4 Unavailable)**, or during transitional deployments **`503
-   Service Unavailable`** with the same header fields --- the IPv4 path is
-   unavailable; the service is not a general outage if IPv6 is expected to work.
-2. **`Retry-Over-IPv6: ?1`** --- the client should retry the same request over
-   IPv6.
+1. **`503 Service Unavailable`** --- the IPv4 path is unavailable; this is not
+   a general outage if IPv6 is expected to work. The status alone is ambiguous
+   with overload or maintenance that affects all address families; the header
+   fields below distinguish planned IPv4 unavailability.
+2. **`Retry-Over-IPv6: ?1`** (**mandatory** on this signal) --- the client
+   should retry the same request over IPv6. This field is the primary
+   machine-readable trigger for aware clients.
 3. **`IPv4-Unavailable-Until`** (optional) --- when IPv4 service may be restored.
 4. **`Retry-Over-IPv6-Token`** (optional, on the IPv4-unavailability response)
    and **`Retry-Over-IPv6-Recovery`** (on a successful IPv6 retry) --- optional
    telemetry so operators can correlate soft failures across load-balanced
    backends.
+5. A **response body** (RECOMMENDED) --- human-readable guidance and/or
+   Problem Details [@!RFC9457] with the registered problem type for IPv4
+   unavailability (see (#response-body)).
 
-Implementations that cannot emit `5NN` (for example, before the status code is
-registered or supported by their HTTP stack) **MAY** send **`503 Service
-Unavailable`** instead, with **`Retry-Over-IPv6: ?1`** and the other response
-header fields defined in this document. Aware clients treat `503` with
-`Retry-Over-IPv6: ?1` the same as `5NN` when deciding to retry over IPv6 (see
-(#retry-over-ipv6) and (#client-requirements)). Operators **SHOULD** use `5NN`
-once their deployment supports it.
-
-The responding entity **MUST** send `5NN` (or `503` with `Retry-Over-IPv6: ?1`
-during transitional deployments) only when the request was received over an
-IPv4 transport connection on the client-facing path (see
+The responding entity **MUST** send this signal only when the request was
+received over an IPv4 transport connection on the client-facing path (see
 (#server-and-operational-considerations)).
 
-Clients that do not implement this specification and receive an unrecognized
-`5NN` status code MUST treat it as `500 Internal Server Error`, as required by
-Section 15 of [@!RFC9110]. Operators SHOULD include a response body explaining
-the IPv4 outage for human readers and for logging by generic HTTP clients.
+Clients that do not implement this specification treat the response as ordinary
+`503 Service Unavailable` (Section 15.6.4 of [@!RFC9110]). Operators SHOULD
+include a response body explaining the IPv4 outage for human readers and for
+logging by generic HTTP clients. Aware clients MUST key retry behavior on
+`Retry-Over-IPv6: ?1`, not on the `503` status alone (see (#retry-over-ipv6)
+and (#client-requirements)).
 
-# The 5NN IPv4 Unavailable Status Code
+# Design Alternatives Considered {#design-alternatives}
 
-The `5NN` (IPv4 Unavailable) status code indicates that the responding entity
-is intentionally not offering the requested service over IPv4 for this authority,
+This section is informative. It summarizes approaches considered for signaling
+planned IPv4 unavailability and explains why this document uses `503 Service
+Unavailable` with `Retry-Over-IPv6` and related fields, plus Problem Details
+with a registered type URI.
+
+## New Status Code (5NN / 566)
+
+Earlier revisions of this document proposed a new 5xx status code (`5NN`, with
+interim tests using `566`) analogous to `505 HTTP Version Not Supported`
+(Section 15.6.6 of [@!RFC9110]): refuse to complete the request on the path
+characteristic the client used (here, IPv4). A dedicated code would appear as a
+distinct bucket in status-only metrics (for example Prometheus label
+`status="566"`).
+
+HTTP status codes are a scarce, generic resource (Section 16.2.2 of
+[@!RFC9110]). They are potentially applicable to any resource, not one
+operational practice. Where the primary deployment is closed or
+operator-controlled and only aware clients change behavior, registering a new
+code mainly for log or dashboard convenience puts unreasonable pressure on the
+status code registry. Unaware clients treat an unrecognized 5xx as `500
+Internal Server Error` and still do not switch address family. Aware clients
+need the header-defined retry semantics either way. This document therefore
+does **not** register a new status code.
+
+## Existing 503 with Retry-After Only
+
+`503 Service Unavailable` with `Retry-After` (Sections 15.6.4 and 10.2.3 of
+[@!RFC9110]) tells the client to wait, then make a follow-up request. That
+encodes delay-then-retry on the same path, not an immediate switch to IPv6.
+Using `Retry-After` as the IPv6-retry or outage-end signal teaches the wrong
+behavior. This document uses `IPv4-Unavailable-Until` for the planned IPv4
+window and keeps `Retry-After` optional only for legacy clients that wait on
+IPv4 (see (#ipv4-unavailable-until)).
+
+## Existing 500 with Descriptive Body Only
+
+`500 Internal Server Error` with a human-readable body does not provide
+structured address-family retry semantics. It also misframes an intentional
+policy as an unexpected server fault. Bodies alone are a poor machine trigger:
+clients often decide retry policy before parsing content, and operators also
+need HTML or plain text for browsers.
+
+## Dedicated Media Type without Headers
+
+A media type such as `application/ipv4-unavailable+json` could carry structured
+fields in the body. Content-Type identifies the format of the representation; it
+does not by itself trigger protocol behavior. Many clients act on status and
+header fields before reading a body; bodies may be empty, stripped, or not
+buffered. Human-facing `text/html` responses would lose machine signaling unless
+JSON were mandatory. Recovery telemetry still needs a request header to echo a
+token. This document therefore keeps response headers as the control plane and
+uses `application/problem+json` with a registered problem `type` URI for
+API-oriented bodies (see (#response-body)), rather than minting a dedicated
+media type.
+
+## Redirect (3xx) {#alt-3xx-redirect}
+
+A `3xx` (Redirection) response with a `Location` URI (Section 15.4 of
+[@!RFC9110]) is a poor fit. There is no standard URI flag meaning "resolve this
+name for IPv6 only" on a dual-stack hostname; redirecting to the same name risks
+an infinite loop or repeated IPv4 selection under Happy Eyeballs. Redirecting to
+a distinct IPv6-only-reachable hostname requires DNS and certificate operations
+that remain optional for human messaging in the body, not a prerequisite for
+machine retry of the same target URI. For IPv4-only clients, a redirect to an
+IPv6-only name typically becomes a connection or name-resolution failure rather
+than a stable HTTP error with a representation.
+
+## Misdirected Request (421) {#alt-421}
+
+`421 Misdirected Request` (Section 15.5.20 of [@!RFC9110]) rejects a request
+when connection context is inappropriate and allows retry on a different
+connection. It is defined for HTTP origin routing and connection coalescing
+(Section 7.4 of [@!RFC9110]), not for intentional IPv4 path withdrawal.
+Reusing it risks confusion with existing HTTP/2 deployments and still requires
+IPv6-specific header fields.
+
+## Chosen Approach
+
+This document uses:
+
+* **`503 Service Unavailable`** as the status code (already registered;
+  maps cleanly in many stacks, including gRPC HTTP-to-RPC mapping);
+* **`Retry-Over-IPv6: ?1`** as the mandatory machine trigger for address-family
+  retry;
+* optional **`IPv4-Unavailable-Until`**, **`Retry-Over-IPv6-Token`**, and
+  **`Retry-Over-IPv6-Recovery`** for window and soft/hard failure telemetry; and
+* **`application/problem+json`** with a registered problem type URI for
+  machine-readable bodies, without a new status code or dedicated media type.
+
+Aware clients MUST NOT treat every `503` as an IPv4-unavailability signal ---
+only those with `Retry-Over-IPv6: ?1` on an IPv4 connection.
+
+# Using 503 for Planned IPv4 Unavailability {#using-503}
+
+A planned IPv4-unavailability response uses the `503 Service Unavailable`
+status code (Section 15.6.4 of [@!RFC9110]) together with
+`Retry-Over-IPv6: ?1`. The combination indicates that the responding entity is
+intentionally not offering the requested service over IPv4 for this authority,
 while service over IPv6 is expected to be available. The client SHOULD retry
 the same request to the same target URI using IPv6 if IPv6 connectivity is
 available.
 
-This status code applies when the responding entity received the request over
-IPv4. It MUST NOT be used to indicate general server overload or maintenance
-that affects all address families (`503 Service Unavailable` is appropriate for
-that case). It is generally inappropriate on the IPv4 loopback interface (see
-(#when-to-send-5nn)).
+This signal applies when the responding entity received the request over IPv4.
+It MUST NOT be used to indicate general server overload or maintenance that
+affects all address families unless `Retry-Over-IPv6: ?1` is also appropriate
+--- in the ordinary overload case, omit `Retry-Over-IPv6` so aware clients do
+not force an IPv6 retry for an address-family-independent outage. The signal is
+generally inappropriate on the IPv4 loopback interface (see
+(#when-to-send-signal)).
 
-By default, `5NN` applies only to the request corresponding to the response in
-which it occurs (Section 16.2.2 of [@!RFC9110]). It does not by itself invalidate
-other in-flight or future requests to the authority. Aware clients MAY prefer
-IPv6 for subsequent connections as described in (#client-requirements); that
-preference is client policy, not an expanded status-code scope that all clients
-can be expected to apply.
+By default, the signal applies only to the request corresponding to the response
+in which it occurs. It does not by itself invalidate other in-flight or future
+requests to the authority. Aware clients MAY prefer IPv6 for subsequent
+connections as described in (#client-requirements); that preference is client
+policy.
 
-Intermediaries and caches MUST NOT transform a `5NN` response into a successful
-response. `5NN` is **not** heuristically cacheable (Section 15.1 of
-[@!RFC9110]). Caching is governed by normal HTTP cache rules [@?RFC9111];
-operators SHOULD send `Cache-Control: private, no-store` when responses are
-generated dynamically based on the client-facing address family (see
-(#security-considerations)).
+## Relationship to Retry-After
 
-A `5NN` response MUST NOT disallow content (Section 16.2.2 of [@!RFC9110]).
-The response MAY include a representation and SHOULD include one for human
-guidance (see (#response-body)). Any representation explains the IPv4 outage;
-an optional IPv6-only-reachable alternate URI in the body is informational and
-does not redefine the identity of the original target resource
-(Section 6.4.2 of [@!RFC9110]).
+`Retry-After` on a `503` response suggests how long the client ought to wait
+before a follow-up request (Section 10.2.3 of [@!RFC9110]). That is the wrong
+primary control for planned IPv4 unavailability: aware clients SHOULD retry
+over IPv6 promptly, not wait for IPv4 to return.
 
-A `5NN` response SHOULD include `Retry-Over-IPv6` as defined in
-(#retry-over-ipv6); on `5NN` responses the value MUST be `?1`. It MAY include
-`IPv4-Unavailable-Until`, a response body, and `Retry-Over-IPv6-Token`.
+`IPv4-Unavailable-Until` marks the end of the planned IPv4 window (see
+(#ipv4-unavailable-until)). Operators MAY also send `Retry-After` so legacy
+clients that only understand `503` delay before retrying on IPv4; aware clients
+MUST prefer `Retry-Over-IPv6` and `IPv4-Unavailable-Until` over inferring
+address-family retry from `Retry-After`.
 
-## Status Code Selection
+## Cacheability and Intermediaries
 
-Per Section 16.2.2 of [@!RFC9110], early drafts ought to avoid allocating a
-specific status-code number until there is clear consensus that it will be
-registered. This document therefore uses the placeholder `5NN` for IPv4
-Unavailable. Interim implementations and tests currently use `566` as a
-concrete stand-in; this document suggests that IANA assign **566** if that
-value remains available (see (#iana-considerations)), reflecting the **6/6
-(June 6)** mnemonic used for coordinated IPv6 events such as World IPv6 Launch.
-The mnemonic is for human operability only; protocol behavior depends on the
-5xx class, not on the particular assigned digits.
+Intermediaries and caches MUST NOT transform an IPv4-unavailability response
+into a successful response. Caching is governed by normal HTTP cache rules
+[@?RFC9111]; operators SHOULD send `Cache-Control: private, no-store` when
+responses are generated dynamically based on the client-facing address family
+(see (#security-considerations)).
 
-### Why the 5xx Class
+A `503` response MUST NOT disallow content. The response MAY include a
+representation and SHOULD include one for human guidance (see (#response-body)).
+Any representation explains the IPv4 outage; an optional IPv6-only-reachable
+alternate URI in the body is informational and does not redefine the identity
+of the original target resource (Section 6.4.2 of [@!RFC9110]).
 
-Section 15.6 of [@!RFC9110] defines the 5xx (Server Error) class for cases where
-the server is aware that it has erred or is incapable of performing the requested
-method. A planned IPv4 outage is an operator or server policy decision: the
-request is valid, but the responding entity declines to serve it on the IPv4
-client-facing path while IPv6 remains available. That aligns with 5xx semantics
-and with the transitional `503 Service Unavailable` fallback defined in this
-document (see (#transitional-fallback)).
-
-The choice of the 5xx class is also analogous to `505 HTTP Version Not Supported`
-(Section 15.6.6 of [@!RFC9110]): the server does not support, or refuses to
-support, completing the request using the same major path characteristics the
-client used --- here, IPv4 rather than an HTTP version --- other than by
-returning this error. As with `505`, the server SHOULD generate a representation
-that explains why the request cannot be completed on that path and what else is
-supported (IPv6 on the same authority, and optionally an IPv6-only-reachable
-site URI; see (#response-body)).
-
-Section 15.5 of [@!RFC9110] defines the 4xx (Client Error) class for cases where
-the client seems to have erred. A hypothetical `4NN` / `466` code would embed a
-similar mnemonic in the 4xx class but would imply that the client could resolve
-the failure by correcting the request. IPv4-only clients cannot self-correct by
-switching address family; framing the outage as a client error is misleading for
-that audience.
-
-### Legacy Fallback
-
-HTTP status codes are extensible (Section 15 of [@!RFC9110]). Clients that do not
-implement this specification MUST understand the class of any status code and
-treat an unrecognized code as equivalent to the x00 code of that class. An
-unrecognized `5NN` (including experimental `566`) is therefore treated as
-`500 Internal Server Error`; an unrecognized hypothetical `466` would be treated
-as `400 Bad Request`. Operators SHOULD include a response body (see
-(#response-body)) so human readers and generic clients see outage explanation
-rather than relying on the x00 fallback label alone.
-
-### Why Not an Existing 4xx Code
-
-`421 Misdirected Request` (Section 15.5.20 of [@!RFC9110]) is the closest
-registered precedent: it rejects a request when the connection context is
-inappropriate and allows the client to retry over a different connection.
-However, `421` is defined for HTTP origin routing and connection coalescing
-(Section 7.4 of [@!RFC9110]), not for intentional IPv4 path withdrawal during
-IPv6 migration. Reusing `421` risks confusion with existing HTTP/2 deployments
-and does not carry IPv6-specific signaling without the header fields defined
-here.
-
-### Why Not a 3xx Redirect
-
-A `3xx` (Redirection) response (Section 15.4 of [@!RFC9110]) with a `Location`
-URI is a poor fit for planned IPv4 unavailability.
-
-The `http` and `https` URI schemes (Section 4.2 of [@!RFC9110]) identify an
-authority by registered name or IP literal. There is no standard URI parameter
-or flag that means "resolve this registered name for IPv6 only" when the name
-is dual-stack. Redirecting to the **same** hostname therefore risks an
-**infinite redirect loop** or repeated selection of IPv4 under Happy Eyeballs
-or similar algorithms: the client follows `Location`, connects again over IPv4,
-and receives another redirect.
-
-Redirecting to a **distinct IPv6-only-reachable hostname** can work, but it
-requires creating and operating that name in DNS (for example, no usable A
-records, or IPv4 deliberately not served) and obtaining a matching HTTPS
-certificate. That operational cost is optional for human messaging in the
-response body (see (#response-body)); it is not a prerequisite for machine
-retry. This document instead signals retry of the **same** target URI over
-IPv6 via `Retry-Over-IPv6` (see (#ipv6-retry)).
-
-For **IPv4-only clients**, a `3xx` to an IPv6-only name typically becomes a
-**connection or name-resolution failure** after the redirect, not a stable HTTP
-error with a representation. That makes the outage harder to log, explain, and
-debug than a `5NN` response, which remains a protocol-level signal with an
-optional body even when the client cannot use IPv6.
+An IPv4-unavailability response MUST include `Retry-Over-IPv6` with value
+`?1`. It MAY include `IPv4-Unavailable-Until`, a response body, and
+`Retry-Over-IPv6-Token`.
 
 ## Example
 
-Wire examples in this document use `566` as the suggested / temporary test value
-for `5NN` pending IANA assignment.
-
 ~~~ http
-HTTP/1.1 566 IPv4 Unavailable
+HTTP/1.1 503 Service Unavailable
 Retry-Over-IPv6: ?1
 IPv4-Unavailable-Until: Sun, 07 Jun 2026 00:00:00 GMT
 Retry-Over-IPv6-Token: "a1b2c3d4e5f6"
 Content-Type: application/problem+json
-Content-Length: 0
+Cache-Control: private, no-store
 
 ~~~
 
@@ -446,11 +478,9 @@ Retry-Over-IPv6 = "Retry-Over-IPv6" OWS ":" OWS boolean
 boolean         = "?0" / "?1"
 ~~~
 
-On `5NN` responses, the value **MUST** be `?1`.
-
-For transitional deployments, `503 Service Unavailable` responses MAY include
-`Retry-Over-IPv6: ?1`; once `5NN` is widely supported, operators SHOULD NOT
-rely on the `503` fallback.
+On IPv4-unavailability responses defined by this document, the value **MUST**
+be `?1`. Ordinary `503` responses that indicate overload or maintenance affecting
+all address families MUST NOT include `Retry-Over-IPv6: ?1`.
 
 ### Semantics
 
@@ -466,7 +496,7 @@ IPv6 will succeed.
 This header field is a response header field as defined in Section 6.3 of
 [@!RFC9110].
 
-## IPv4-Unavailable-Until
+## IPv4-Unavailable-Until {#ipv4-unavailable-until}
 
 The `IPv4-Unavailable-Until` response header field indicates the time after
 which IPv4 service for this authority may be restored.
@@ -496,13 +526,13 @@ scenarios, while `IPv4-Unavailable-Until` marks the end of a planned IPv4
 unavailability window.
 
 Operators MAY also send `Retry-After` for legacy clients that do not understand
-`5NN` or `IPv4-Unavailable-Until`.
+this signal or `IPv4-Unavailable-Until`.
 
 ## Retry-Over-IPv6-Token
 
 The `Retry-Over-IPv6-Token` response header field carries an opaque token that
 a client MAY echo on a subsequent successful IPv6 retry so operators can
-correlate a `5NN` response with a recovery in centralized logs.
+correlate an IPv4-unavailability response with a recovery in centralized logs.
 
 ### Syntax
 
@@ -523,8 +553,8 @@ Tokens SHOULD be short-lived (on the order of minutes, and not extending beyond
 stateless tokens verifiable or loggable by any node in a load-balanced fleet
 without session affinity to a particular origin server.
 
-This header is RECOMMENDED on `5NN` responses when operators want pairwise
-5NN-to-recovery correlation across backends.
+This header is RECOMMENDED on IPv4-unavailability responses when operators want
+pairwise signal-to-recovery correlation across backends.
 
 ## Legacy Client Compatibility
 
@@ -534,16 +564,15 @@ Legacy clients that do not implement this document might still benefit from:
 * `Cache-Control: no-store` on dynamically generated outage responses.
 * A response body with plain language (see (#response-body)).
 
-Aware clients MUST prefer `5NN`, `Retry-Over-IPv6`, and `IPv4-Unavailable-Until`
-over inferring outage semantics from the body alone.
+Aware clients MUST prefer `Retry-Over-IPv6` and `IPv4-Unavailable-Until` over
+inferring outage semantics from the body or from `503` alone.
 
 # Request Header Fields
 
 ## Retry-Over-IPv6-Recovery {#retry-over-ipv6-recovery}
 
 The `Retry-Over-IPv6-Recovery` request header field allows an aware client to
-confirm that a successful request over IPv6 is the retry following a `5NN`
-response (or transitional `503` with `Retry-Over-IPv6: ?1`) received over IPv4.
+confirm that a successful request over IPv6 is the retry following an IPv4-unavailability signal (`503` with `Retry-Over-IPv6: ?1`) received over IPv4.
 
 ### Syntax
 
@@ -555,12 +584,12 @@ recovery-param           = token "=" ( token / quoted-string )
 ~~~
 
 The only recovery parameter defined by this document is `token`, whose value
-SHOULD be copied from `Retry-Over-IPv6-Token` on the prior `5NN` response.
+SHOULD be copied from `Retry-Over-IPv6-Token` on the prior IPv4-unavailability response.
 
 ### Semantics
 
 The field value `recovered` means: the responding entity previously returned
-`5NN` (or `503` with `Retry-Over-IPv6: ?1`) on an IPv4 connection for this
+`503` with `Retry-Over-IPv6: ?1` on an IPv4 connection for this
 logical request attempt, and this request is the successful retry over IPv6.
 
 The client MUST send this header on the first successful IPv6 request that
@@ -574,7 +603,7 @@ There is no failure variant defined in this document. If the IPv6 connection
 attempt fails before any HTTP response is received, the client cannot report that
 failure in-band to the origin during a full IPv4 outage.
 
-### Connection Lifecycle
+### Connection Lifecycle {#connection-lifecycle}
 
 In typical implementations, a client does not keep the IPv4 connection open while
 also retrying the same request over IPv6. Maintaining both connections in
@@ -584,30 +613,30 @@ therefore uncommon.
 
 For this reason, `Retry-Over-IPv6-Recovery` is carried on the **IPv6** retry
 request. Operators **MUST NOT** expect recovery signaling on the IPv4
-connection that received `5NN` (or `503` with `Retry-Over-IPv6: ?1`).
+connection that received `503` with `Retry-Over-IPv6: ?1`.
 
 A typical sequence is:
 
-1. Receive `5NN` (and optional `Retry-Over-IPv6-Token`) on IPv4.
+1. Receive `503` with `Retry-Over-IPv6: ?1` (and optional `Retry-Over-IPv6-Token`) on IPv4.
 2. Close or abandon the IPv4 connection.
 3. Open a new connection over IPv6 and retry the same request.
 4. On success, include `Retry-Over-IPv6-Recovery` on that IPv6 request.
 
 ### Cross-Backend Logging
 
-In load-balanced deployments, the `5NN` response and the recovery request often
+In load-balanced deployments, the IPv4-unavailability response and the recovery request often
 reach different origin servers. Correlation is an operator responsibility:
 
-* Log `5NN` events with `Retry-Over-IPv6-Token` at the edge, load balancer, or
+* Log IPv4-unavailability events (`503` with `Retry-Over-IPv6: ?1`) with `Retry-Over-IPv6-Token` at the edge, load balancer, or
   origin.
 * Log `Retry-Over-IPv6-Recovery` (and echoed `token`) at the same aggregation
   tier when possible.
 * Join events off-box by token across all backend logs.
 
-Operators SHOULD NOT assume that the origin server that emitted `5NN` will
+Operators SHOULD NOT assume that the origin server that emitted the signal will
 receive the recovery report.
 
-Without tokens, operators MAY compare aggregate `5NN` counts with aggregate
+Without tokens, operators MAY compare aggregate IPv4-unavailability counts with aggregate
 recovery counts over an outage window; this yields ratio estimates only, not
 per-session pairing.
 
@@ -633,8 +662,7 @@ succeeded. Section 9 of [@!RFC8305] states that Happy Eyeballs handles failures
 at the TCP/IP layer only; Section 9.2 explicitly notes that the application
 (for example, TLS or **HTTP**) may not be operational on every resolved address.
 **RFC 8305 does not specify that an HTTP `5xx` response on one connection
-counts as failure for all parallel connection attempts.** A `5NN` (or `503`
-with `Retry-Over-IPv6: ?1`) is an HTTP response on an already-established
+counts as failure for all parallel connection attempts.** A `503` with `Retry-Over-IPv6: ?1` is an HTTP response on an already-established
 connection; handling it --- including whether to retry over the other address
 family --- is **outside** the Happy Eyeballs connection-race algorithm and is
 left to the HTTP client or application.
@@ -642,18 +670,18 @@ left to the HTTP client or application.
 Implications for this document:
 
 * If IPv6 completes the transport handshake and delivers a successful HTTP
-  response first, the client MAY cancel the IPv4 attempt before `5NN` is
-  received. No `Retry-Over-IPv6-Recovery` is sent. `5NN` counts may
+  response first, the client MAY cancel the IPv4 attempt before the signal is
+  received. No `Retry-Over-IPv6-Recovery` is sent. Signal counts may
   under-represent total exposure --- this is often the desired outcome during an
   outage.
 * The client MUST send `Retry-Over-IPv6-Recovery` only if it fully received
-  `5NN` (or `503` with `Retry-Over-IPv6: ?1`) on an IPv4 connection for this
+  `503` with `Retry-Over-IPv6: ?1` on an IPv4 connection for this
   logical request attempt.
 * If IPv6 already succeeded for this logical request attempt at the HTTP
-  layer, the client MUST NOT treat a late or abandoned IPv4 `5NN` as requiring
+  layer, the client MUST NOT treat a late or abandoned IPv4-unavailability signal as requiring
   another IPv6 retry or recovery signal --- regardless of how Happy Eyeballs
   raced the underlying connections.
-* An aware client that receives `5NN` only on IPv4 and has not yet succeeded
+* An aware client that receives the signal only on IPv4 and has not yet succeeded
   over IPv6 MUST apply the IPv6 retry requirements in (#ipv6-retry); that
   behavior is an HTTP-layer extension beyond [@!RFC8305].
 
@@ -669,31 +697,26 @@ HTTP status handling. None of these specifications treats an HTTP 4xx or 5xx
 response on one established connection as failure for other parallel connection
 attempts (Section 9.2 of [@!RFC8305]).
 
-Typical outcomes when IPv4 returns `5NN` during a Happy Eyeballs race:
+Typical outcomes when IPv4 returns `503` with `Retry-Over-IPv6: ?1` during a Happy Eyeballs race:
 
 * IPv6 delivers a successful HTTP response first --- the IPv4 attempt may be
-  cancelled before `5NN` is received; no recovery signal is needed.
-* IPv4 wins the transport race and returns `5NN` before IPv6 connects --- other
+  cancelled before the signal is received; no recovery signal is needed.
+* IPv4 wins the transport race and returns the signal before IPv6 connects --- other
   attempts are likely already cancelled; an aware client MUST still apply
   (#ipv6-retry).
 * Both connections are up --- completion order at the HTTP layer determines
-  whether a late IPv4 `5NN` requires further action (see above).
-
-The numeric choice between a hypothetical `466` (4xx) and `5NN` (5xx) does not
-change Happy Eyeballs behavior, because connection racing does not inspect HTTP
-status codes.
+  whether a late IPv4 signal requires further action (see above).
 
 #### Common Client Stack Behavior
 
 This subsection is informative. Major HTTP clients do not automatically retry
-over IPv6 on `5NN`, `503` with `Retry-Over-IPv6`, or unknown 4xx/5xx codes
+over IPv6 on `503` with `Retry-Over-IPv6`, or unknown 4xx/5xx codes
 unless they implement this specification or application-specific logic.
 
 **Web browsers.** Chromium and Firefox implement Happy Eyeballs ([@!RFC8305] or
 successor algorithms) at the transport layer: the first successful TCP/TLS or
 QUIC handshake cancels other in-flight attempts. Neither browser automatically
-resends a request over the other address family because of an HTTP `5NN` or
-`503` response. Chromium does automatically resend in some other cases (for
+resends a request over the other address family because of an HTTP `503` response with `Retry-Over-IPv6`. Chromium does automatically resend in some other cases (for
 example `421 Misdirected Request`, certain connection errors on reused sockets,
 and limited HTTP/2 or QUIC protocol retries); those paths are unrelated to
 IPv4-unavailability signaling.
@@ -705,8 +728,8 @@ policies typically list `UNAVAILABLE` as a retryable code
 ([@?GRPC-HTTP-MAPPING]). That mapping lists `503 Service Unavailable` (and
 selected gateway and overload responses) as `UNAVAILABLE` but maps unknown
 status codes to `UNKNOWN`. gRPC implementations that support this document
-SHOULD map `5NN` to `UNAVAILABLE` (see (#grpc-and-other-http-apis)) and honor
-`Retry-Over-IPv6` before treating multi-address errors as hard failures.
+SHOULD honor `Retry-Over-IPv6` before treating multi-address `UNAVAILABLE` errors
+as hard failures or blindly retrying the same address list (see (#grpc-and-other-http-apis)).
 
 **Rest.li and similar HTTP API frameworks.** Client-side retry in Rest.li-style
 deployments is oriented toward failover to a different host in a cluster (for
@@ -719,7 +742,7 @@ Because none of these stacks substitutes for the IPv6 retry behavior in
 (#ipv6-retry), operators deploying planned IPv4 outages SHOULD NOT assume that
 Happy Eyeballs or generic HTTP client libraries will recover automatically.
 
-Operators interpreting `5NN` and recovery metrics during planned outages SHOULD
+Operators interpreting IPv4-unavailability and recovery metrics during planned outages SHOULD
 account for Happy Eyeballs transport racing and for the fact that HTTP status
 codes are not part of the RFC 8305 success definition.
 
@@ -734,7 +757,7 @@ Retry-Over-IPv6-Recovery: recovered; token="a1b2c3d4e5f6"
 
 # Response Body {#response-body}
 
-Responses with `5NN` SHOULD include a body explaining the planned IPv4 outage
+IPv4-unavailability responses SHOULD include a body explaining the planned IPv4 outage
 for legacy clients and human readers.
 
 Operators SHOULD make the body as clear as possible for non-technical readers.
@@ -766,13 +789,13 @@ example IPv6 works on a test site but Happy Eyeballs still selects IPv4 for
 the dual-stack name). When `IPv4-Unavailable-Until` is present, the body SHOULD
 state when service over the older connection may resume in plain language.
 
-## IPv6-Only-Reachable Alternate Site
+## IPv6-Only-Reachable Alternate Site {#ipv6-only-reachable-alternate-site}
 
 When an operator publishes a **distinct hostname or URI that is
 IPv6-only-reachable** --- for example, a name with AAAA records and no usable
 A records, or where IPv4 is deliberately not served --- and that name has a
 valid certificate for HTTPS, the response body **SHOULD** include a clear
-human-readable link to that URI. For example, a `5NN` response for
+human-readable link to that URI. For example, an IPv4-unavailability response for
 `https://www.example.com/` MAY point users to
 `https://ipv6.example.com/` when the latter is IPv6-only-reachable.
 
@@ -831,35 +854,42 @@ as the text content of an HTML page as `Content-Type: text/html`.
 >
 > Service over the older connection may resume after 7 June 2026, 00:00 UTC.
 
-For machine-readable errors, deployments MAY use Problem Details
-[@?RFC9457], for example (status `566` is the suggested / temporary test value
-for `5NN`). The optional `ipv6OnlySite` member appears only when an
-IPv6-only-reachable alternate URI is published:
+## Machine-Readable Problem Details
+
+For machine-readable errors, deployments SHOULD use Problem Details
+[@!RFC9457] with `Content-Type: application/problem+json` and the problem type
+URI registered for IPv4 unavailability (see (#iana-considerations)):
 
 ~~~ json
 {
-  "type": "about:blank",
+  "type": "urn:ietf:params:problem:ipv4-unavailable",
   "title": "IPv4 Unavailable",
-  "status": 566,
+  "status": 503,
   "detail": "IPv4 unavailable until 2026-06-07T00:00:00Z.",
-  "retryOverIPv6": true,
   "ipv4UnavailableUntil": "2026-06-07T00:00:00Z",
   "ipv6OnlySite": "https://ipv6.example.com/"
 }
 ~~~
 
-Omit `ipv6OnlySite` when no such alternate URI is available. The member is for
-presentation layers that render Problem Details to users. It is not a
-substitute for `Retry-Over-IPv6`. The `detail` field is primarily for
-developers and aware clients; deployments SHOULD still provide a separate
-human-oriented body (plain text or HTML) with the guidance above when the
-response may be shown to end users.
+The `type` member identifies this problem class. Extension members such as
+`ipv4UnavailableUntil` and `ipv6OnlySite` are optional. Omit `ipv6OnlySite`
+when no such alternate URI is available. Extension members are for presentation
+layers that render Problem Details to users. They are not a substitute for
+`Retry-Over-IPv6`. The `detail` field is primarily for developers and aware
+clients; deployments SHOULD still provide a separate human-oriented body (plain
+text or HTML) with the guidance above when the response may be shown to end
+users.
+
+Aware clients MUST NOT require a Problem Details body to perform the IPv6
+retry: `Retry-Over-IPv6: ?1` on the response is sufficient. This document does
+not define a dedicated media type such as `application/ipv4-unavailable+json`;
+see (#design-alternatives).
 
 # Client Requirements {#client-requirements}
 
-## Processing 5NN
+## Processing the Signal {#processing-the-signal}
 
-When a client receives `5NN` (or `503` with `Retry-Over-IPv6: ?1`):
+When a client receives `503` with `Retry-Over-IPv6: ?1`:
 
 1. If the client knows the response arrived on an IPv4 connection, it SHOULD
    proceed with an IPv6 retry as below.
@@ -875,25 +905,23 @@ When a client receives `5NN` (or `503` with `Retry-Over-IPv6: ?1`):
 The client SHOULD close or abandon the IPv4 connection before retrying over IPv6,
 consistent with the lifecycle described in (#retry-over-ipv6-recovery). The
 retry MUST use the same method, target URI, and authority. The client SHOULD force address-family selection to IPv6 for this
-retry. The client MUST NOT change the host, scheme, or port solely because of
-`5NN` or `Retry-Over-IPv6`.
+retry. The client MUST NOT change the host, scheme, or port solely because of `Retry-Over-IPv6`.
 
 ## Idempotent Methods {#client-idempotent-methods}
 
-Aware clients that receive `5NN` (or transitional `503` with
-`Retry-Over-IPv6: ?1`) SHOULD retry the same method, target URI, and body over
+Aware clients that receive `503` with `Retry-Over-IPv6: ?1` SHOULD retry the same method, target URI, and body over
 IPv6 (see (#ipv6-retry)). For safe methods [@!RFC9110], such a retry is
 generally acceptable. For non-idempotent methods such as `POST`, the same retry
 can cause duplicate processing --- for example, a duplicate payment, order, or
 database insert. Responding entities and operators SHOULD follow the guidance in
-(#idempotent-methods) on when not to send `5NN` for such requests.
+(#idempotent-methods) on when not to send this signal for such requests.
 
 ## Loop Prevention
 
 The client MUST NOT perform more than one IPv4-to-IPv6 retry per logical
-request attempt triggered by `5NN` or `Retry-Over-IPv6`.
+request attempt triggered by `Retry-Over-IPv6`.
 
-After receiving `5NN`, the client SHOULD prefer IPv6 for subsequent connections
+After receiving the signal, the client SHOULD prefer IPv6 for subsequent connections
 to the authority until `IPv4-Unavailable-Until` (if present) or for a default
 period (for example, 10 minutes).
 
@@ -909,7 +937,7 @@ calling application for logging and support tickets.
 
 ## Recovery Signaling
 
-On the first successful IPv6 request following a fully received `5NN` over IPv4,
+On the first successful IPv6 request following a fully received IPv4-unavailability signal over IPv4,
 the client SHOULD send `Retry-Over-IPv6-Recovery: recovered` and SHOULD echo
 `Retry-Over-IPv6-Token` in the `token` parameter when a token was provided.
 
@@ -922,9 +950,9 @@ operators SHOULD not assume all "IPv4" clients can switch address families.
 
 # Server and Operational Considerations {#server-and-operational-considerations}
 
-## When to Send 5NN {#when-to-send-5nn}
+## When to Send the Signal {#when-to-send-signal}
 
-The responding entity SHOULD send `5NN` when:
+The responding entity SHOULD send `503` with `Retry-Over-IPv6: ?1` when:
 
 * IPv4 HTTP service for the authority is intentionally unavailable;
 * IPv6 service for the requested resource is expected to be available; and
@@ -932,8 +960,7 @@ The responding entity SHOULD send `5NN` when:
 * For non-idempotent methods, duplicate processing of an IPv6 retry is
   acceptable or prevented (see (#idempotent-methods)).
 
-The responding entity MAY omit `5NN` (and the transitional `503` with
-`Retry-Over-IPv6`) for requests received on the IPv4 loopback interface --- for
+The responding entity MAY omit this signal for requests received on the IPv4 loopback interface --- for
 example, when the client-facing connection uses addresses in `127.0.0.0/8`
 such as `127.0.0.1`. Routable IPv4 service may be disabled during a planned
 outage while loopback remains available for local health checks, monitoring, and
@@ -942,20 +969,20 @@ administration; those clients do not need a signal to retry over IPv6.
 Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service. Operators on the open Internet **SHOULD** follow
-(#intended-deployment) before enabling `5NN` policy.
+(#intended-deployment) before enabling IPv4-unavailability policy.
 
 ## Idempotent Methods and Duplicate Processing {#idempotent-methods}
 
 As described in (#client-idempotent-methods), aware clients SHOULD retry after
-`5NN`, including for non-idempotent methods --- which can cause duplicate
+this signal, including for non-idempotent methods --- which can cause duplicate
 processing. Clients cannot generally determine whether a given application or
 resource tolerates duplicate processing. Responding entities MUST NOT assume that
 end-user clients will suppress IPv6 retries for non-idempotent methods.
 
-A `5NN` response does **not** guarantee that the first request had no effect.
+An IPv4-unavailability response does **not** guarantee that the first request had no effect.
 Duplicate risk arises when:
 
-* **`5NN` is generated at an edge or load balancer** while an origin server
+* **The signal is generated at an edge or load balancer** while an origin server
   already started or completed processing the request on the IPv4 path.
 * **Policy races during rollout** --- IPv4-unavailability policy may be enabled or
   disabled while requests are in flight.
@@ -964,16 +991,15 @@ Duplicate risk arises when:
   work without deduplication at the application layer (see
   (#interaction-with-happy-eyeballs)).
 
-Because of this uncertainty, the responding entity **SHOULD NOT** send `5NN`
-(or `503` with `Retry-Over-IPv6: ?1`) for non-idempotent methods such as
+Because of this uncertainty, the responding entity **SHOULD NOT** send `503` with `Retry-Over-IPv6: ?1` for non-idempotent methods such as
 `POST` when an IPv6 retry of the same request would cause unacceptable duplicate
 side effects, unless the application provides deduplication (for example, an
 idempotency key), a request identifier, or another mechanism that makes the
 retry safe. Where duplicate processing is unacceptable and no such mechanism
-exists, **omitting `5NN` MAY be preferable** to signaling a retry the client
+exists, **omitting the signal MAY be preferable** to signaling a retry the client
 cannot safely evaluate.
 
-Operators SHOULD prefer applying `5NN` to idempotent methods during outage
+Operators SHOULD prefer applying this signal to idempotent methods during outage
 tests. APIs that must remain available for non-idempotent methods through a
 planned IPv4 outage SHOULD document and implement application-level
 deduplication or other safe-retry semantics explicitly.
@@ -981,14 +1007,22 @@ deduplication or other safe-retry semantics explicitly.
 ## Measuring Outage Impact {#measuring-outage-impact}
 
 Operators SHOULD instrument at the edge or load balancer, aggregating all
-backends:
+backends. Status code `503` alone is insufficient to distinguish planned IPv4
+unavailability from overload: operators SHOULD count responses that include
+`Retry-Over-IPv6: ?1` (or emit a dedicated metric label) rather than relying on
+generic `503` dashboards. Common monitoring stacks such as Prometheus and
+Grafana do not automatically parse `application/problem+json` bodies or
+response headers into time series; those fields must be logged or exported
+explicitly.
+
+
 
 Metric | Source
 -------|------
-5NN count | `5NN` responses logged with optional token
+Signal count | `503` responses with `Retry-Over-IPv6: ?1` logged with optional token
 Recovery count | Requests carrying `Retry-Over-IPv6-Recovery`
 Paired recoveries | Off-box join on matching token values
-Unrecovered 5NN | `5NN count - paired recoveries` (estimated hard fail and legacy clients)
+Unrecovered signals | `signal count - paired recoveries` (estimated hard fail and legacy clients)
 
 Hard-failure counts are estimates: clients with no IPv6 path cannot send
 recovery signals in-band.
@@ -1000,10 +1034,10 @@ Interpreting metrics during a drill:
 * **High soft-failure rate with elevated origin 5xx or latency** --- possible
   **split-stack** deployment: clients reached IPv6 at the edge while backends or
   internal hops still depend on IPv4 (see (#split-stack-deployments)).
-* **Low recovery relative to `5NN` count** --- hard failures, legacy clients, or
+* **Low recovery relative to signal count** --- hard failures, legacy clients, or
   clients without an IPv6 path.
 
-Operators **SHOULD** correlate edge `5NN` and recovery metrics with **origin,
+Operators **SHOULD** correlate edge signal and recovery metrics with **origin,
 worker, and downstream dependency** health during an outage window, not rely on
 edge metrics alone.
 
@@ -1013,15 +1047,15 @@ response based on them.
 ## CDN and Reverse Proxy Deployment
 
 When an edge terminates client IPv4 and connects to an origin over IPv6, the
-**edge** sends `5NN` to the client when IPv4 to the edge is disabled --- not
-necessarily the origin application. The entity that generates `5NN` MUST know
+**edge** sends the IPv4-unavailability signal to the client when IPv4 to the edge is disabled --- not
+necessarily the origin application. The entity that generates the signal MUST know
 the client-facing address family.
 
 When ingress **terminates IPv6** from clients but uses **IPv4 toward
 origin servers or pods**, disabling IPv4 **to the edge** exercises client paths;
 disabling IPv4 on an **internal HTTP gateway** (ingress-to-origin, API gateway,
 or service-mesh ingress) exercises **service-to-service** HTTP that still uses
-operator-controlled hostnames. The same `5NN` semantics apply on each hop where
+operator-controlled hostnames. The same signal semantics apply on each hop where
 IPv4 is intentionally unavailable.
 
 ## Split-Stack and Multi-Hop Deployments {#split-stack-deployments}
@@ -1031,8 +1065,8 @@ In some container and cloud deployments, **public ingress** is dual-stack while
 translation, not for the paths clients use). Platform IPv6 inside the cluster
 often lags public dual-stack at the edge.
 
-`5NN` is emitted based on the **client-facing transport** at the responding
-entity (see (#when-to-send-5nn)). It does **not** probe east-west paths,
+The signal is emitted based on the **client-facing transport** at the responding
+entity (see (#when-to-send-signal)). It does **not** probe east-west paths,
 sidecars, background workers, or callbacks that use cluster-internal IPv4 names
 or addresses.
 
@@ -1042,7 +1076,7 @@ depends on IPv4 and fails or degrades downstream.
 
 Operators **SHOULD** treat edge-only drills as **necessary but not sufficient**
 for IPv6-only readiness. Operators **SHOULD** extend staged outages to **internal
-HTTP gateways** where policy applies and **SHOULD** correlate edge `5NN` and
+HTTP gateways** where policy applies and **SHOULD** correlate edge signal and
 recovery metrics with origin and downstream error rates during the window, as
 described in (#measuring-outage-impact).
 
@@ -1050,12 +1084,6 @@ described in (#measuring-outage-impact).
 
 Token format and validation are deployment-specific. Tokens SHOULD be
 unguessable, short-lived, and loggable without affinity to the issuing server.
-
-## Transitional Fallback {#transitional-fallback}
-
-Deployments that cannot emit `5NN` MAY use `503 Service Unavailable` with
-`Retry-Over-IPv6: ?1` and `IPv4-Unavailable-Until` until `5NN` support is
-available.
 
 # Application Protocol Considerations
 
@@ -1067,24 +1095,24 @@ No change to the on-the-wire status code or header field definitions is required
 across HTTP versions. Deployment considerations differ mainly in how connections
 are managed:
 
-* **HTTP/1.1** --- A `5NN` response typically applies to one request on a single
+* **HTTP/1.1** --- An IPv4-unavailability response typically applies to one request on a single
   TCP connection. The client closes that IPv4 connection before retrying over
   IPv6, as described in (#connection-lifecycle).
-* **HTTP/2** --- `5NN` is a connection-level signal for that TCP connection. A
+* **HTTP/2** --- The signal applies to that TCP connection. A
   client SHOULD close the IPv4 HTTP/2 connection (affecting all streams on it)
-  before opening an IPv6 connection for the retry. Servers SHOULD emit `5NN` on
+  before opening an IPv6 connection for the retry. Servers SHOULD emit the signal on
   every IPv4 HTTP/2 connection that receives a request during an outage, not
   only on the first stream.
 * **HTTP/3** --- The same semantics apply on a QUIC connection to the authority.
   HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY
   hold concurrent connections of different HTTP versions and address families.
-  A `5NN` received on an IPv4 QUIC connection does not automatically invalidate
+  A signal received on an IPv4 QUIC connection does not automatically invalidate
   an existing IPv6 HTTP/3 connection, but the client MUST still apply
-  (#ipv6-retry) when the logical request attempt that received `5NN` has not yet
+  (#ipv6-retry) when the logical request attempt that received the signal has not yet
   succeeded over IPv6.
 
 Clients that discover HTTP/3 via `Alt-Svc` or similar mechanisms on an IPv4
-connection still need to evaluate `5NN` and `Retry-Over-IPv6` before treating the
+connection still need to evaluate `Retry-Over-IPv6` before treating the
 request as a general failure. Operators SHOULD configure load balancers and
 origins to emit the same signaling on all HTTP versions they expose.
 
@@ -1093,12 +1121,10 @@ origins to emit the same signaling on all HTTP versions they expose.
 gRPC over HTTP maps response status codes to RPC status when the `grpc-status`
 header is absent ([@?GRPC-HTTP-MAPPING]). That table maps `503 Service
 Unavailable` (and selected gateway timeouts and overload responses) to
-`UNAVAILABLE`; it maps `400 Bad Request` to `INTERNAL` and assigns `UNKNOWN`
-to most other codes, including unregistered 5xx values. Implementations that
-support this document SHOULD map HTTP `5NN` to `UNAVAILABLE`, the same as
-`503`, and SHOULD inspect `Retry-Over-IPv6` on the HTTP response before
-aggregating multi-address connection errors, so that an IPv4 policy signal is
-not confused with IPv6 connectivity failure.
+`UNAVAILABLE`. Implementations that support this document SHOULD inspect
+`Retry-Over-IPv6` on the HTTP response before aggregating multi-address
+connection errors or applying same-path retry, so that an IPv4 policy signal is
+not confused with IPv6 connectivity failure or ordinary overload.
 
 Suggested error text for logs: "IPv4 unavailable until \<date\>; retry over
 IPv6."
@@ -1112,11 +1138,11 @@ This section compares HTTP-layer signaling with other transition techniques.
 
 Method | Limitation for staged outages
 -------|------------------------------
-DNS-only (withdraw A records) | Hard rollback; poor application errors; difficult time-bounded windows
+DNS-only (withdraw A records) | Hard rollback; all-or-nothing blast radius; poor application errors; difficult time-bounded windows
 Network ACL or routing | Complex rollback; timeouts instead of policy signals; weak metrics
 Happy Eyeballs alone [@!RFC8305] | Implicit; may misattribute IPv4 policy as IPv6 brokenness
 Site banner only | Applications and APIs do not see banners; no automatic IPv6 retry
-HTTP 5NN + headers (this document) | Reversible at LB; structured retry; measurable soft/hard fail; measures client-to-signaling-entity path only
+HTTP 503 + Retry-Over-IPv6 (this document) | Reversible at LB; structured retry; measurable soft/hard fail; measures client-to-signaling-entity path only; status alone mixes with overload unless headers or custom metrics are used
 
 HTTP-layer signaling complements DNS and network changes, especially when A
 records remain or when the client already connected over IPv4. Internal
@@ -1147,7 +1173,7 @@ using a secret shared across the load-balanced fleet. Such validation is for
 operational filtering only; clients MUST NOT interpret token structure, and
 token validation does not authenticate the client or the recovery signal.
 
-`5NN` responses that depend on the client-facing address family SHOULD use
+IPv4-unavailability responses that depend on the client-facing address family SHOULD use
 `Cache-Control: private, no-store` when appropriate to avoid cache poisoning.
 
 IPv6-only-reachable alternate site links in the response body (see
@@ -1164,23 +1190,6 @@ application protocol in use.
 
 IANA is requested to make the following registrations.
 
-## HTTP Status Code
-
-In the "Hypertext Transfer Protocol (HTTP) Status Code Registry"
-(<https://www.iana.org/assignments/http-status-codes/>), IANA is requested to
-assign a 5xx status code for **IPv4 Unavailable**, referenced as `5NN` in this
-document until a concrete value is assigned (Section 16.2.2 of [@!RFC9110]).
-
-This document **suggests the value 566** if it remains unassigned, for alignment
-with the 6/6 mnemonic used in coordinated IPv6 deployment events. IANA MAY
-assign a different unused code in the 5xx range if 566 is unavailable or
-inappropriate. Provisional implementations and examples in this document use
-566 as a temporary test value representing `5NN`.
-
-Value | Description | Reference
-------|-------------|----------
-5NN (suggested: 566) | IPv4 Unavailable | This document
-
 ## HTTP Field Names
 
 In the "Hypertext Transfer Protocol (HTTP) Field Name Registry"
@@ -1193,19 +1202,30 @@ IPv4-Unavailable-Until | permanent | - | This document
 Retry-Over-IPv6-Token | permanent | - | This document
 Retry-Over-IPv6-Recovery | permanent | - | This document
 
+## Problem Type
+
+This document registers the following Problem Details type under the registry
+established by [@!RFC9457]:
+
+Type URI | Description | Reference
+---------|-------------|----------
+`urn:ietf:params:problem:ipv4-unavailable` | Planned IPv4 unavailability; retry over IPv6 when `Retry-Over-IPv6: ?1` is present | This document
+
+This document does **not** register a new HTTP status code.
+
 # Examples
 
-This section is informative. Wire examples use `566` as the suggested /
-temporary test value for `5NN` pending IANA assignment.
+This section is informative.
 
 ## Dual-Stack Browser
 
 A browser receives:
 
 ~~~ http
-HTTP/1.1 566 IPv4 Unavailable
+HTTP/1.1 503 Service Unavailable
 Retry-Over-IPv6: ?1
 IPv4-Unavailable-Until: Sun, 07 Jun 2026 00:00:00 GMT
+Cache-Control: private, no-store
 Content-Length: 0
 
 ~~~
@@ -1220,7 +1240,7 @@ such URI is published, omit the corresponding paragraph (see
 (#body-example-without-ipv6-only-site)).
 
 ~~~ http
-HTTP/1.1 566 IPv4 Unavailable
+HTTP/1.1 503 Service Unavailable
 Retry-After: 86400
 Content-Type: text/html; charset=utf-8
 
@@ -1253,7 +1273,7 @@ resume after 7 June 2026, 00:00 UTC.</p></body></html>
 Backend A (IPv4 path) returns:
 
 ~~~ http
-HTTP/1.1 566 IPv4 Unavailable
+HTTP/1.1 503 Service Unavailable
 Retry-Over-IPv6: ?1
 Retry-Over-IPv6-Token: "abc123"
 Content-Length: 0
@@ -1276,7 +1296,7 @@ An edge log pipeline joins both events on `token=abc123`.
 This example is informative. It illustrates that **edge soft failure does not
 imply stack-wide IPv6 readiness** (see (#split-stack-deployments)).
 
-1. A dual-stack client connects to public ingress over IPv4 and receives `5NN`
+1. A dual-stack client connects to public ingress over IPv4 and receives `503`
    with `Retry-Over-IPv6: ?1`.
 2. The client retries over IPv6; ingress returns `200 OK` with
    `Retry-Over-IPv6-Recovery` --- a **soft failure** at the edge.
