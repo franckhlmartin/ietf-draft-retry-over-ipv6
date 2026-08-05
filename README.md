@@ -15,11 +15,11 @@ locally. Those copies may be out of date if someone edits the Markdown without
 running `make` and committing the outputs; when in doubt, build from the `.md`
 file or trust the version on the IETF Datatracker after submission.
 
-## Server configuration examples
+## Call for volunteers / server examples
 
-Informative (non-normative) configs for emitting `503` + `Retry-Over-IPv6`
-signaling live under [`docs/`](docs/README.md), with one guide per server
-([NGINX](docs/nginx.md), [Apache](docs/apache.md)).
+Planned IPv4 outage drills (plain-language ask, coordinated monthly window, and
+informative server configs) live under [`docs/`](docs/README.md), with one guide
+per server ([NGINX](docs/nginx.md), [Apache](docs/apache.md)).
 
 ## Building
 
