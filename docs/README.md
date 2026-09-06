@@ -63,10 +63,12 @@ the chosen end of the window.
 
 Live reference deployments (full-day window + 7-day pre-outage banner):
 
-- [pacific.ipv6forum.com](https://pacific.ipv6forum.com/)
-- [caribbean.ipv6forum.com](https://caribbean.ipv6forum.com/)
+- [pacific.ipv6forum.com](https://pacific.ipv6forum.com)
+- [caribbean.ipv6forum.com](https://caribbean.ipv6forum.com)
+- [whynoipv6.com](https://whynoipv6.com/)
+- [www.peachymango.org](https://www.peachymango.org/)
 
-Source and schedule logic:
+Source and schedule logic for the IPv6 Forum sites:
 [franckhlmartin/ipv6-pacific](https://github.com/franckhlmartin/ipv6-pacific)
 (`internal/ipv4outage/`).
 
@@ -273,8 +275,9 @@ coordinated monthly window:
 
 | Site | Notes |
 |------|-------|
-| [pacific.ipv6forum.com](https://pacific.ipv6forum.com/) | IPv6 Forum Pacific; [ipv6-pacific](https://github.com/franckhlmartin/ipv6-pacific) |
-| [caribbean.ipv6forum.com](https://caribbean.ipv6forum.com/) | IPv6 Forum Caribbean; same codebase |
+| [pacific.ipv6forum.com](https://pacific.ipv6forum.com) | IPv6 Forum Pacific; [ipv6-pacific](https://github.com/franckhlmartin/ipv6-pacific) |
+| [caribbean.ipv6forum.com](https://caribbean.ipv6forum.com) | IPv6 Forum Caribbean; same codebase |
+| [whynoipv6.com](https://whynoipv6.com/) | |
 | [www.peachymango.org](https://www.peachymango.org/) | |
 
 Running the drill on your dual-stack site? **Add it to this table via a pull
