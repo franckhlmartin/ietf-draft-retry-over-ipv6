@@ -7,7 +7,7 @@ workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 consensus = true
 
-date = 2026-07-28
+date = 2026-09-07
 
 [seriesInfo]
 name = "Internet-Draft"
@@ -166,7 +166,9 @@ service remains available over IPv6 on other paths. Unannounced
 or frequent public drills can increase support load and reputational risk.
 Operators SHOULD weigh those effects against the operational value of the
 signal, prefer advance notice, and limit duration and frequency where impact on
-unrelated users is likely.
+unrelated users is likely. Public deployments **SHOULD** also consider limiting
+the signal to human-facing HTML documents rather than images, scripts, fonts,
+and similar subresources (see (#content-type-and-subresources)).
 
 When an operator is **obliged** to run a planned IPv4 outage --- for example, a
 fixed government cutover deadline, a coordinated industry drill with advance
@@ -965,6 +967,25 @@ example, when the client-facing connection uses addresses in `127.0.0.0/8`
 such as `127.0.0.1`. Routable IPv4 service may be disabled during a planned
 outage while loopback remains available for local health checks, monitoring, and
 administration; those clients do not need a signal to retry over IPv6.
+
+### Content Type and Subresources {#content-type-and-subresources}
+
+On the **public Internet**, operators **SHOULD** prefer emitting this signal
+only for requests that would normally produce a human-facing HTML document ---
+for example, navigations or requests whose `Accept` header prefers
+`text/html` --- and **omit** it for typical subresources such as images
+(`image/*`), scripts, stylesheets, fonts, and similar assets. Those URLs are
+frequently fetched by **non-interactive** clients (for example, webmail clients
+loading images, or feed and preview fetchers). A `503` on such a request often
+surfaces as a broken image or missing asset with **no readable explanation**,
+whereas an HTML document response can carry the guidance in (#response-body).
+
+In **operator-controlled** environments (see (#intended-deployment)), applying
+the signal to all IPv4 requests --- including subresources --- **MAY** still be
+appropriate when the goal is complete soft/hard-failure measurement and clients
+are under the same operational umbrella. Full-site signaling on the public
+Internet remains valid when intentional; selective HTML-document signaling is
+advisory policy, not a hard requirement.
 
 Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually

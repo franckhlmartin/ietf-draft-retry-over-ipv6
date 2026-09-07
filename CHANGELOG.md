@@ -7,6 +7,18 @@ Formatting-only edits are omitted unless they affect published semantics.
 `draft-martin-retry-over-ipv6-01` (2026-06-11) are on the
 [IETF Datatracker](https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/).
 
+## [Unreleased]
+
+- **When to send (§):** on the public Internet, operators **SHOULD** prefer
+  emitting `503` + `Retry-Over-IPv6` only for human-facing HTML documents and
+  omit typical subresources (images, scripts, stylesheets, fonts); non-interactive
+  clients (e.g. webmail image loads) otherwise see a broken asset with no
+  explanation. Operator-controlled environments **MAY** still signal all IPv4
+  requests for fuller measurement. Cross-reference from Intended Deployment.
+- **Docs:** operational checklist notes HTML-document-only signaling on the
+  public Internet.
+- **Build:** refresh document date to 2026-09-07 (clear DOC_DATE_IN_PAST nit).
+
 ## [draft-martin-retry-over-ipv6-04] - 2026-07-28
 
 - **Introduction:** note DNS/network IPv4 withdrawal is all-or-nothing for blast

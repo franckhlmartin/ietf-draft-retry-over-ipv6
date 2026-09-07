@@ -6,7 +6,7 @@
 <title abbrev="retry-over-ipv6">HTTP Signaling of Planned IPv4 Unavailability</title><seriesInfo value="draft-martin-retry-over-ipv6-04" stream="IETF" status="standard" name="Internet-Draft"></seriesInfo>
 <author initials="F." surname="Martin" fullname="Franck Martin"><organization>Peachymango.org</organization><address><postal><street></street>
 </postal><email>franck@peachymango.org</email>
-</address></author><date year="2026" month="July" day="28"></date>
+</address></author><date year="2026" month="September" day="7"></date>
 <area>art</area>
 <workgroup>HTTP Working Group</workgroup>
 <keyword>IPv6</keyword>
@@ -155,7 +155,9 @@ service remains available over IPv6 on other paths. Unannounced
 or frequent public drills can increase support load and reputational risk.
 Operators SHOULD weigh those effects against the operational value of the
 signal, prefer advance notice, and limit duration and frequency where impact on
-unrelated users is likely.</t>
+unrelated users is likely. Public deployments <bcp14>SHOULD</bcp14> also consider limiting
+the signal to human-facing HTML documents rather than images, scripts, fonts,
+and similar subresources (see <xref target="content-type-and-subresources"></xref>).</t>
 <t>When an operator is <strong>obliged</strong> to run a planned IPv4 outage --- for example, a
 fixed government cutover deadline, a coordinated industry drill with advance
 notice, or an irreversible network-layer change --- HTTP-layer signaling is a
@@ -908,10 +910,28 @@ example, when the client-facing connection uses addresses in <tt>127.0.0.0/8</tt
 such as <tt>127.0.0.1</tt>. Routable IPv4 service may be disabled during a planned
 outage while loopback remains available for local health checks, monitoring, and
 administration; those clients do not need a signal to retry over IPv6.</t>
+
+<section anchor="content-type-and-subresources"><name>Content Type and Subresources</name>
+<t>On the <strong>public Internet</strong>, operators <bcp14>SHOULD</bcp14> prefer emitting this signal
+only for requests that would normally produce a human-facing HTML document ---
+for example, navigations or requests whose <tt>Accept</tt> header prefers
+<tt>text/html</tt> --- and <strong>omit</strong> it for typical subresources such as images
+(<tt>image/*</tt>), scripts, stylesheets, fonts, and similar assets. Those URLs are
+frequently fetched by <strong>non-interactive</strong> clients (for example, webmail clients
+loading images, or feed and preview fetchers). A <tt>503</tt> on such a request often
+surfaces as a broken image or missing asset with <strong>no readable explanation</strong>,
+whereas an HTML document response can carry the guidance in <xref target="response-body"></xref>.</t>
+<t>In <strong>operator-controlled</strong> environments (see <xref target="intended-deployment"></xref>), applying
+the signal to all IPv4 requests --- including subresources --- <bcp14>MAY</bcp14> still be
+appropriate when the goal is complete soft/hard-failure measurement and clients
+are under the same operational umbrella. Full-site signaling on the public
+Internet remains valid when intentional; selective HTML-document signaling is
+advisory policy, not a hard requirement.</t>
 <t>Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service. Operators on the open Internet <bcp14>SHOULD</bcp14> follow
 <xref target="intended-deployment"></xref> before enabling IPv4-unavailability policy.</t>
+</section>
 </section>
 
 <section anchor="idempotent-methods"><name>Idempotent Methods and Duplicate Processing</name>

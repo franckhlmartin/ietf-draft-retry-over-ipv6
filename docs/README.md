@@ -260,6 +260,7 @@ the draft’s measuring-outage section).
 5. Use short-lived, unguessable tokens.
 6. Instrument at this hop; do not assume edge soft-failure rates prove IPv6-only readiness for backends (split-stack).
 7. On the public Internet, use advance notice and limit duration/frequency.
+8. On the public Internet, prefer signaling **HTML documents** only; omit images, scripts, fonts, and similar subresources (non-interactive clients cannot explain a broken asset).
 
 ## References
 
