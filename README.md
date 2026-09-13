@@ -8,12 +8,13 @@ The repository currently builds **`-04`** from `draft-martin-retry-over-ipv6.md`
 This repository contains the source for the IETF Internet-Draft:
 **"HTTP Signaling of Planned IPv4 Unavailability"**.
 
+**Editor's copy (HTML):** [franckhlmartin.github.io/ietf-draft-retry-over-ipv6](https://franckhlmartin.github.io/ietf-draft-retry-over-ipv6/) ([HTML](https://franckhlmartin.github.io/ietf-draft-retry-over-ipv6/draft-martin-retry-over-ipv6.html), [TXT](https://franckhlmartin.github.io/ietf-draft-retry-over-ipv6/draft-martin-retry-over-ipv6.txt), [XML](https://franckhlmartin.github.io/ietf-draft-retry-over-ipv6/draft-martin-retry-over-ipv6.xml))
+
 **Source of truth:** `draft-martin-retry-over-ipv6.md` is the only authoritative
-source. The repository also includes generated `draft-martin-retry-over-ipv6-04.xml`,
-`.txt`, and `.html` files so you can read the draft on GitHub without building
-locally. Those copies may be out of date if someone edits the Markdown without
-running `make` and committing the outputs; when in doubt, build from the `.md`
-file or trust the version on the IETF Datatracker after submission.
+source and the only draft file committed to git. Generated `.xml`, `.txt`, and
+`.html` files are produced locally by `make` and on GitHub Actions (idnits plus
+downloadable artifacts on every push/PR; the editor's copy is published to
+GitHub Pages from `main`). Do not commit the generated files.
 
 ## Call for volunteers / server examples
 
@@ -38,10 +39,10 @@ make clean    # remove generated outputs
 make clean-all # also remove the local .venv
 ```
 
-Before submitting, run `make` and commit the updated `.xml`, `.txt`, and `.html`
-if you want the GitHub copies to stay in sync. The submission file is
-`draft-martin-retry-over-ipv6-04.xml`. Upload it to the
+Before submitting, run `make` and upload the generated XML (for example
+`draft-martin-retry-over-ipv6-04.xml`) to the
 [IETF Datatracker submission tool](https://datatracker.ietf.org/submit/).
+Do not add the generated `.xml`, `.txt`, or `.html` files to the commit.
 
 When editing the Markdown source, use [mmark](https://github.com/mmarkdown/mmark)
 conventions: internal links are `(#anchor)` (not `{{anchor}}`), and tables use

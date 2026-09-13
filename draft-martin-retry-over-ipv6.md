@@ -50,6 +50,8 @@ This note is to be removed before publishing as an RFC.
 
 The latest revision of this draft can be found at
 https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6/.
+An HTML editor's copy is at
+https://franckhlmartin.github.io/ietf-draft-retry-over-ipv6/draft-martin-retry-over-ipv6.html.
 Status information for this document may be found at
 https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/.
 
