@@ -1,25 +1,32 @@
 name: Lint and Build
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: stable
+          cache: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install idnits
         run: npm install -g @ietf-tools/idnits
@@ -31,10 +38,76 @@ jobs:
         run: make lint
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: draft-artifacts
           path: |
-            draft-martin-retry-over-ipv6-03.xml
-            draft-martin-retry-over-ipv6-03.txt
-            draft-martin-retry-over-ipv6-03.html
+            draft-martin-retry-over-ipv6-*.xml
+            draft-martin-retry-over-ipv6-*.txt
+            draft-martin-retry-over-ipv6-*.html
+
+      - name: Prepare Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          for ext in html txt xml; do
+            files=(draft-martin-retry-over-ipv6-*.${ext})
+            src="${files[0]}"
+            cp "$src" "_site/$(basename "$src")"
+            cp "$src" "_site/draft-martin-retry-over-ipv6.${ext}"
+          done
+          cat > _site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>draft-martin-retry-over-ipv6</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 42em; margin: 4em auto; padding: 0 1em; line-height: 1.5; }
+              h1 { font-size: 1.4em; }
+              ul { line-height: 2; }
+            </style>
+          </head>
+          <body>
+            <h1>HTTP Signaling of Planned IPv4 Unavailability</h1>
+            <p>Editor's copy of <code>draft-martin-retry-over-ipv6</code>.</p>
+            <ul>
+              <li><a href="draft-martin-retry-over-ipv6.html">HTML</a></li>
+              <li><a href="draft-martin-retry-over-ipv6.txt">Plain text</a></li>
+              <li><a href="draft-martin-retry-over-ipv6.xml">XML</a> (Datatracker submission)</li>
+            </ul>
+            <p>
+              <a href="https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6">Source repository</a>
+              ·
+              <a href="https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/">Datatracker</a>
+            </p>
+          </body>
+          </html>
+          EOF
+
+      - name: Configure Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
