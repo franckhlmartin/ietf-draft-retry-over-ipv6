@@ -7,7 +7,8 @@ Shared requirements, response body, verification, and checklist:
 [README.md](README.md).
 
 Requires `mod_rewrite`, `mod_headers`, and (for tokens) `mod_unique_id`.
-`mod_setenvif` is used for address-family detection. Optional: `mod_lua`.
+`mod_setenvif` is used for address-family detection and the day-6
+`SetEnvIfExpr` gate. Optional: `mod_lua`.
 
 ## 1. Modules
 
@@ -23,19 +24,27 @@ LoadModule unique_id_module modules/mod_unique_id.so
 
 ```apache
 # Manual override for an ad-hoc drill (set to 1), else leave 0.
-SetEnv IPV4_OUTAGE_MANUAL 0
+# SetEnvIf (not SetEnv) so the value is visible to SetEnvIfExpr / <If>.
+SetEnvIf Request_URI "^" IPV4_OUTAGE_MANUAL=0
+SetEnvIf Request_URI "^" IPV4_OUTAGE=0
+
+# %{TIME_DAY} is zero-padded (01–31). Prefer TZ=UTC on httpd so nodes agree.
+# Requires mod_setenvif (SetEnvIfExpr).
+SetEnvIfExpr "%{TIME_DAY} == '06' || %{env:IPV4_OUTAGE_MANUAL} -eq 1" IPV4_OUTAGE=1
 
 # Client-facing IPv4 (dotted-quad), excluding loopback.
 SetEnvIf Remote_Addr "^\d+\.\d+\.\d+\.\d+$" IPV4_CLIENT=1
-SetEnvIf Remote_Addr "^127\." IPV4_CLIENT=!1
+SetEnvIf Remote_Addr "^127\." IPV4_CLIENT=0
 
 # Log recovery on IPv6 retries (do not alter responses based on this header).
 LogFormat "%h %l %u %t \"%r\" %>s \"%{Retry-Over-IPv6-Recovery}i\" %{UNIQUE_ID}e" ipv6_recovery
 CustomLog logs/ipv6_recovery_log ipv6_recovery
 ```
 
-Day-of-month gating uses `mod_rewrite`’s `%{TIME_DAY}` (1–31, server local
-time). Prefer running httpd with `TZ=UTC` so every node agrees on “the 6th.”
+Day-of-month gating uses `%{TIME_DAY}` (**`01`–`31`**, with a leading zero).
+A common mistake is `RewriteCond %{TIME_DAY} =6`, which never matches day 6
+because the value is `06`. Prefer the `IPV4_OUTAGE` flag above, or compare
+against `'06'`.
 
 ## 3. Emit `503` + headers
 
@@ -89,9 +98,12 @@ chmod +x /var/www/cgi-bin/ipv4-unavailable.cgi
     # SSLEngine on
     # ...
 
-    SetEnv IPV4_OUTAGE_MANUAL 0
+    SetEnvIf Request_URI "^" IPV4_OUTAGE_MANUAL=0
+    SetEnvIf Request_URI "^" IPV4_OUTAGE=0
+    SetEnvIfExpr "%{TIME_DAY} == '06' || %{env:IPV4_OUTAGE_MANUAL} -eq 1" IPV4_OUTAGE=1
+
     SetEnvIf Remote_Addr "^\d+\.\d+\.\d+\.\d+$" IPV4_CLIENT=1
-    SetEnvIf Remote_Addr "^127\." !IPV4_CLIENT
+    SetEnvIf Remote_Addr "^127\." IPV4_CLIENT=0
 
     ScriptAlias /cgi-bin/ /var/www/cgi-bin/
     <Directory /var/www/cgi-bin>
@@ -100,14 +112,13 @@ chmod +x /var/www/cgi-bin/ipv4-unavailable.cgi
         Require all granted
     </Directory>
 
-    RewriteEngine On
-
-    # Outage if manual override OR calendar day is the 6th.
-    RewriteCond %{ENV:IPV4_OUTAGE_MANUAL} =1 [OR]
-    RewriteCond %{TIME_DAY} =6
-    RewriteCond %{ENV:IPV4_CLIENT} =1
-    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD|OPTIONS|PUT|DELETE)$
-    RewriteRule ^ /cgi-bin/ipv4-unavailable.cgi [L]
+    # Outage if IPV4_OUTAGE is set (manual override OR calendar day is the 6th).
+    <If "%{env:IPV4_OUTAGE} -eq 1">
+        RewriteEngine On
+        RewriteCond %{ENV:IPV4_CLIENT} =1
+        RewriteCond %{REQUEST_METHOD} ^(GET|HEAD|OPTIONS|PUT|DELETE)$
+        RewriteRule ^ /cgi-bin/ipv4-unavailable.cgi [L]
+    </If>
 
     # Normal document root / proxy for IPv6 and when outage is off.
     DocumentRoot /var/www/html
@@ -130,12 +141,13 @@ When you prefer not to run CGI/Lua, return `503` with a static body via
 ```apache
 ErrorDocument 503 /ipv4-unavailable.json
 
-RewriteEngine On
-RewriteCond %{ENV:IPV4_OUTAGE_MANUAL} =1 [OR]
-RewriteCond %{TIME_DAY} =6
-RewriteCond %{ENV:IPV4_CLIENT} =1
-RewriteCond %{REQUEST_METHOD} ^(GET|HEAD|OPTIONS|PUT|DELETE)$
-RewriteRule ^ - [R=503,L]
+# Assume IPV4_OUTAGE / IPV4_CLIENT are set as in section 2.
+<If "%{env:IPV4_OUTAGE} -eq 1">
+    RewriteEngine On
+    RewriteCond %{ENV:IPV4_CLIENT} =1
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD|OPTIONS|PUT|DELETE)$
+    RewriteRule ^ - [R=503,L]
+</If>
 
 # Headers on the error response:
 Header always set Retry-Over-IPv6 "?1" "expr=%{REQUEST_STATUS} == 503"
@@ -159,9 +171,8 @@ map when outage is enabled):
 
 ```lua
 function handle(r)
-    local day = tonumber(os.date("!%d"))  -- UTC day of month
-    local manual = r.subprocess_env["IPV4_OUTAGE_MANUAL"] == "1"
-    if not manual and day ~= 6 then
+    -- Prefer the shared IPV4_OUTAGE flag (handles zero-padded TIME_DAY).
+    if r.subprocess_env["IPV4_OUTAGE"] ~= "1" then
         return apache2.DECLINED
     end
     if r.subprocess_env["IPV4_CLIENT"] ~= "1" then
@@ -201,24 +212,36 @@ end
 
 ### Full day on the 6th (built-in)
 
-`RewriteCond %{TIME_DAY} =6` (and the Lua `day ~= 6` check) enable signaling
-for the whole calendar day. No cron is required. Set `TZ=UTC` on the httpd
-service if you want UTC days.
+`SetEnvIfExpr` with `%{TIME_DAY} == '06'` sets `IPV4_OUTAGE=1` for the whole
+calendar day. No cron is required. Set `TZ=UTC` on the httpd service if you
+want UTC days.
+
+**Pitfall:** `%{TIME_DAY}` is zero-padded (`01`–`31`). Use `'06'`, not `6`.
+`RewriteCond %{TIME_DAY} =6` does not match day 6 (observed in production on
+ipv6forum.com).
+
+If you gate with `RewriteCond` instead of `SetEnvIfExpr`, compare the padded
+value:
+
+```apache
+RewriteCond %{TIME_DAY} ='06'
+```
 
 ### Shorter window via cron (optional)
 
 ```bash
 # /etc/cron.d/ipv4-outage-day6  (UTC) — toggle manual override for one hour
-0 9 6 * * root sed -i 's/IPV4_OUTAGE_MANUAL 0/IPV4_OUTAGE_MANUAL 1/' /etc/httpd/conf.d/ipv4-outage.conf && systemctl reload httpd
-0 10 6 * * root sed -i 's/IPV4_OUTAGE_MANUAL 1/IPV4_OUTAGE_MANUAL 0/' /etc/httpd/conf.d/ipv4-outage.conf && systemctl reload httpd
+0 9 6 * * root sed -i 's/IPV4_OUTAGE_MANUAL=0/IPV4_OUTAGE_MANUAL=1/' /etc/httpd/conf.d/ipv4-outage.conf && systemctl reload httpd
+0 10 6 * * root sed -i 's/IPV4_OUTAGE_MANUAL=1/IPV4_OUTAGE_MANUAL=0/' /etc/httpd/conf.d/ipv4-outage.conf && systemctl reload httpd
 ```
 
-Omit the `%{TIME_DAY} =6` condition if cron alone owns the schedule.
+Drop the `%{TIME_DAY} == '06'` half of `SetEnvIfExpr` if cron alone owns the
+schedule.
 
 ## 5. Enable / reload
 
 ```bash
-# For a manual drill: SetEnv IPV4_OUTAGE_MANUAL 1, then:
+# For a manual drill: set IPV4_OUTAGE_MANUAL=1, then:
 sudo apachectl configtest && sudo systemctl reload apache2
 # or: sudo systemctl reload httpd
 # Day-6 schedule needs no reload when the date changes.
@@ -226,6 +249,6 @@ sudo apachectl configtest && sudo systemctl reload apache2
 
 | Action | Knob |
 |--------|------|
-| Start drill | `SetEnv IPV4_OUTAGE_MANUAL 1`, or wait for `%{TIME_DAY} =6` |
-| End drill | `SetEnv IPV4_OUTAGE_MANUAL 0` (day-6 ends at midnight automatically) |
+| Start drill | `IPV4_OUTAGE_MANUAL=1`, or wait for `%{TIME_DAY} == '06'` |
+| End drill | `IPV4_OUTAGE_MANUAL=0` (day-6 ends at midnight automatically) |
 | Rollback | `apachectl configtest && systemctl reload apache2` |

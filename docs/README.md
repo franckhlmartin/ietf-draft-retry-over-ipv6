@@ -63,6 +63,7 @@ the chosen end of the window.
 
 Live reference deployments (full-day window + 7-day pre-outage banner):
 
+- [ipv6forum.com](https://ipv6forum.com/)
 - [pacific.ipv6forum.com](https://pacific.ipv6forum.com)
 - [caribbean.ipv6forum.com](https://caribbean.ipv6forum.com)
 - [whynoipv6.com](https://whynoipv6.com/)
