@@ -7,11 +7,11 @@ workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 consensus = true
 
-date = 2026-09-07
+date = 2026-10-05
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-martin-retry-over-ipv6-04"
+value = "draft-martin-retry-over-ipv6-05"
 stream = "IETF"
 status = "standard"
 
@@ -64,7 +64,7 @@ the HTTP Working Group (httpbis).
 Source for this draft and an issue tracker can be found at
 https://github.com/franckhlmartin/ietf-draft-retry-over-ipv6.
 
-This revision (`-04`) no longer proposes a new HTTP status code. Planned IPv4
+This revision (`-05`) no longer proposes a new HTTP status code. Planned IPv4
 unavailability is signaled with `503 Service Unavailable` and
 `Retry-Over-IPv6: ?1`. Earlier revisions used a provisional `5NN` / `566`
 stand-in; that approach is discussed only as a design alternative.

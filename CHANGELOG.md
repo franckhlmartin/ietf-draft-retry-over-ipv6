@@ -9,6 +9,8 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## [Unreleased]
 
+## [draft-martin-retry-over-ipv6-05] - 2026-10-05
+
 - **When to send (§):** on the public Internet, operators **SHOULD** prefer
   emitting `503` + `Retry-Over-IPv6` only for human-facing HTML documents and
   omit typical subresources (images, scripts, stylesheets, fonts); non-interactive
@@ -17,7 +19,8 @@ Formatting-only edits are omitted unless they affect published semantics.
   requests for fuller measurement. Cross-reference from Intended Deployment.
 - **Docs:** operational checklist notes HTML-document-only signaling on the
   public Internet.
-- **Build:** refresh document date to 2026-09-07 (clear DOC_DATE_IN_PAST nit).
+- **Build:** document date 2026-10-05.
+- Version bump to `-05`.
 
 ## [draft-martin-retry-over-ipv6-04] - 2026-07-28
 

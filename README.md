@@ -3,7 +3,7 @@
 **IETF Internet-Draft:** Versions `-00` (2026-06-06) and `-01` (2026-06-11) have
 been submitted to the IETF and are tracked on the
 [IETF Datatracker](https://datatracker.ietf.org/doc/draft-martin-retry-over-ipv6/).
-The repository currently builds **`-04`** from `draft-martin-retry-over-ipv6.md`.
+The repository currently builds **`-05`** from `draft-martin-retry-over-ipv6.md`.
 
 This repository contains the source for the IETF Internet-Draft:
 **"HTTP Signaling of Planned IPv4 Unavailability"**.
@@ -40,7 +40,7 @@ make clean-all # also remove the local .venv
 ```
 
 Before submitting, run `make` and upload the generated XML (for example
-`draft-martin-retry-over-ipv6-04.xml`) to the
+`draft-martin-retry-over-ipv6-05.xml`) to the
 [IETF Datatracker submission tool](https://datatracker.ietf.org/submit/).
 Do not add the generated `.xml`, `.txt`, or `.html` files to the commit.
 
