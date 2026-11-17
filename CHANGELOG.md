@@ -9,6 +9,8 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## [Unreleased]
 
+- **Build:** document date 2026-11-16 (clear idnits `DOC_DATE_IN_PAST`).
+
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 
 - **When to send (§):** on the public Internet, operators **SHOULD** prefer

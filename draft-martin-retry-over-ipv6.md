@@ -7,7 +7,7 @@ workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 consensus = true
 
-date = 2026-10-05
+date = 2026-11-16
 
 [seriesInfo]
 name = "Internet-Draft"
