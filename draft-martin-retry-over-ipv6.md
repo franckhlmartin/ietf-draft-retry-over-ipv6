@@ -33,9 +33,9 @@ HTTP signaling for an intentional, often time-bounded IPv4 outage: the existing
 `503 Service Unavailable` status code together with the mandatory
 `Retry-Over-IPv6` response header field (and optional related fields) that
 instruct aware clients to retry over IPv6 after closing the IPv4 connection, and
-allow clients to confirm successful IPv6 recovery via an optional correlation
-token so operators can distinguish soft failures from hard failures in
-centralized logs. Machine-readable response bodies MAY use Problem Details
+allow clients to mark the IPv6 retry (with an optional correlation token) so
+operators can join that attempt with the resulting status and distinguish soft
+failures from hard failures in centralized logs. Machine-readable response bodies MAY use Problem Details
 (RFC 9457) with a registered problem type URI. The mechanism supports staged
 enterprise rollouts, internal HTTP services, and permanent IPv6-only migration;
 coordinated public events (for example, 6/6 drills) remain possible with advance
@@ -287,9 +287,9 @@ entity that receives a request over IPv4 sends:
    machine-readable trigger for aware clients.
 3. **`IPv4-Unavailable-Until`** (optional) --- when IPv4 service may be restored.
 4. **`Retry-Over-IPv6-Token`** (optional, on the IPv4-unavailability response)
-   and **`Retry-Over-IPv6-Recovery`** (on a successful IPv6 retry) --- optional
-   telemetry so operators can correlate soft failures across load-balanced
-   backends.
+   and **`Retry-Over-IPv6-Recovery`** (on the IPv6 retry request) --- optional
+   telemetry so operators can correlate the IPv4 signal with the IPv6 attempt
+   and its outcome across load-balanced backends.
 5. A **response body** (RECOMMENDED) --- human-readable guidance and/or
    Problem Details [@!RFC9457] with the registered problem type for IPv4
    unavailability (see (#response-body)).
@@ -576,7 +576,11 @@ inferring outage semantics from the body or from `503` alone.
 ## Retry-Over-IPv6-Recovery {#retry-over-ipv6-recovery}
 
 The `Retry-Over-IPv6-Recovery` request header field allows an aware client to
-confirm that a successful request over IPv6 is the retry following an IPv4-unavailability signal (`503` with `Retry-Over-IPv6: ?1`) received over IPv4.
+indicate that this IPv6 request is the retry following an IPv4-unavailability
+signal (`503` with `Retry-Over-IPv6: ?1`) received over IPv4. Because it is a
+request header, the client sends it before the IPv6 response is known; whether
+recovery succeeded is determined from the HTTP response (and any later
+application outcome), not from the header value alone.
 
 ### Syntax
 
@@ -594,9 +598,10 @@ SHOULD be copied from `Retry-Over-IPv6-Token` on the prior IPv4-unavailability r
 
 The field value `recovered` means: the responding entity previously returned
 `503` with `Retry-Over-IPv6: ?1` on an IPv4 connection for this
-logical request attempt, and this request is the successful retry over IPv6.
+logical request attempt, and this request is the IPv6 retry for that attempt.
+It does not assert that the IPv6 request will complete successfully.
 
-The client MUST send this header on the first successful IPv6 request that
+The client SHOULD send this header on the first IPv6 retry request that
 follows such a response for the same target URI. The client MUST NOT send it on
 every subsequent request to the authority.
 
@@ -604,8 +609,11 @@ The client MUST NOT send this header to unrelated origins. The header MUST NOT
 contain personally identifiable information.
 
 There is no failure variant defined in this document. If the IPv6 connection
-attempt fails before any HTTP response is received, the client cannot report that
-failure in-band to the origin during a full IPv4 outage.
+attempt fails before any HTTP request is delivered, the client cannot report that
+failure in-band to the origin during a full IPv4 outage. If the IPv6 request
+is delivered but the response is unsuccessful (for example `5xx`), operators
+still observe the recovery header and classify the outcome from the response
+status when correlating by token.
 
 ### Connection Lifecycle {#connection-lifecycle}
 
@@ -624,7 +632,7 @@ A typical sequence is:
 1. Receive `503` with `Retry-Over-IPv6: ?1` (and optional `Retry-Over-IPv6-Token`) on IPv4.
 2. Close or abandon the IPv4 connection.
 3. Open a new connection over IPv6 and retry the same request.
-4. On success, include `Retry-Over-IPv6-Recovery` on that IPv6 request.
+4. Include `Retry-Over-IPv6-Recovery` on that IPv6 retry request (see (#client-requirements)).
 
 ### Cross-Backend Logging
 
@@ -941,9 +949,11 @@ calling application for logging and support tickets.
 
 ## Recovery Signaling
 
-On the first successful IPv6 request following a fully received IPv4-unavailability signal over IPv4,
-the client SHOULD send `Retry-Over-IPv6-Recovery: recovered` and SHOULD echo
-`Retry-Over-IPv6-Token` in the `token` parameter when a token was provided.
+On the first IPv6 retry following a fully received IPv4-unavailability signal over IPv4,
+the client SHOULD send `Retry-Over-IPv6-Recovery: recovered` on that retry request
+and SHOULD echo `Retry-Over-IPv6-Token` in the `token` parameter when a token was
+provided. The client sends the header with the request; success or failure of
+recovery is not known until the response (if any) is received.
 
 ## NAT64 and Translation
 
@@ -1046,6 +1056,11 @@ Signal count | `503` responses with `Retry-Over-IPv6: ?1` logged with optional t
 Recovery count | Requests carrying `Retry-Over-IPv6-Recovery`
 Paired recoveries | Off-box join on matching token values
 Unrecovered signals | `signal count - paired recoveries` (estimated hard fail and legacy clients)
+
+`Retry-Over-IPv6-Recovery` counts IPv6 retry **attempts that reached the
+logging tier**, not confirmed HTTP success. Pair the header (and token) with
+the response status to separate successful recoveries from retries that still
+failed at the application layer.
 
 Hard-failure counts are estimates: clients with no IPv6 path cannot send
 recovery signals in-band.
@@ -1320,15 +1335,20 @@ This example is informative. It illustrates that **edge soft failure does not
 imply stack-wide IPv6 readiness** (see (#split-stack-deployments)).
 
 1. A dual-stack client connects to public ingress over IPv4 and receives `503`
-   with `Retry-Over-IPv6: ?1`.
-2. The client retries over IPv6; ingress returns `200 OK` with
-   `Retry-Over-IPv6-Recovery` --- a **soft failure** at the edge.
+   with `Retry-Over-IPv6: ?1` (and optional `Retry-Over-IPv6-Token`).
+2. The client opens an IPv6 connection and retries the same request, including
+   `Retry-Over-IPv6-Recovery: recovered` (and the echoed `token` when present)
+   on that **request**. Ingress accepting the IPv6 request is a **soft failure**
+   at the edge: the client reached the dual-stack front door over IPv6.
 3. Ingress forwards the request to a worker pod over cluster IPv4; the pod cannot
    reach a dependency that was only tested over internal IPv4, and the client
    eventually receives `502 Bad Gateway` or `504 Gateway Timeout`.
 
-Operators SHOULD not conclude IPv6-only migration is complete from edge recovery
-metrics alone when internal paths were not exercised.
+Operators observing `Retry-Over-IPv6-Recovery` together with a non-success
+status SHOULD treat the edge hop as recovered for address-family purposes and
+still investigate the application or dependency failure. They SHOULD NOT
+conclude IPv6-only migration is complete from edge recovery metrics alone when
+internal paths were not exercised.
 
 <reference anchor="IETF71-IPV4-OUTAGE" target="https://web.archive.org/web/20111016062408/wiki.tools.isoc.org/IETF71_IPv4_Outage">
   <front>
