@@ -1053,27 +1053,37 @@ explicitly.
 Metric | Source
 -------|------
 Signal count | `503` responses with `Retry-Over-IPv6: ?1` logged with optional token
-Recovery count | Requests carrying `Retry-Over-IPv6-Recovery`
-Paired recoveries | Off-box join on matching token values
-Unrecovered signals | `signal count - paired recoveries` (estimated hard fail and legacy clients)
+Observed retry count | IPv6 requests carrying `Retry-Over-IPv6-Recovery` that reach the logging tier
+Paired retry count | Distinct IPv4 signals correlated with observed IPv6 retry requests using matching token values
+Successful HTTP recovery count | Paired IPv6 retry requests receiving a 2xx HTTP response
+Unpaired signal estimate | Signal count minus distinct IPv4 signals with an observed paired IPv6 retry
 
-`Retry-Over-IPv6-Recovery` counts IPv6 retry **attempts that reached the
-logging tier**, not confirmed HTTP success. Pair the header (and token) with
-the response status to separate successful recoveries from retries that still
-failed at the application layer.
+`Retry-Over-IPv6-Recovery` identifies IPv6 retry attempts that reached the
+logging tier, not confirmed HTTP success. Operators can correlate the
+recovery header and optional token with the resulting HTTP response status
+to distinguish observed retry attempts from successful HTTP recoveries.
+A paired retry that receives an unsuccessful HTTP response is not counted
+as a successful HTTP recovery.
 
-Hard-failure counts are estimates: clients with no IPv6 path cannot send
-recovery signals in-band.
+The unpaired signal estimate counts IPv4 unavailability signals for which
+no corresponding IPv6 retry was observed and correlated. It does not
+include paired retries that subsequently fail at the HTTP or application
+layer. Missing correlation may result from clients without an IPv6 path,
+clients that do not implement this mechanism, absent correlation tokens,
+or incomplete logging. Hard-failure counts therefore remain estimates,
+rather than definitive measurements of client IPv6 reachability.
 
 Interpreting metrics during a drill:
 
-* **High soft-failure rate with low user-visible errors** --- client path to the
-  signaling entity is likely OK; a good result **at that hop**.
-* **High soft-failure rate with elevated origin 5xx or latency** --- possible
-  **split-stack** deployment: clients reached IPv6 at the edge while backends or
-  internal hops still depend on IPv4 (see (#split-stack-deployments)).
-* **Low recovery relative to signal count** --- hard failures, legacy clients, or
-  clients without an IPv6 path.
+* **High successful HTTP recovery count with low user-visible errors** ---
+  the IPv6 retry mechanism is likely functioning at the measured hop.
+* **High observed retry count with elevated origin 5xx or latency** ---
+  clients may reach the IPv6 ingress while downstream dependencies still
+  experience failures, potentially indicating a **split-stack** deployment
+  (see (#split-stack-deployments)).
+* **Low observed retry count relative to signal count** --- possible
+  hard failures, legacy clients, clients without an IPv6 path, or
+  incomplete correlation and logging.
 
 Operators **SHOULD** correlate edge signal and recovery metrics with **origin,
 worker, and downstream dependency** health during an outage window, not rely on
