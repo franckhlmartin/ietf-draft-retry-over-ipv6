@@ -417,11 +417,17 @@ not force an IPv6 retry for an address-family-independent outage. The signal is
 generally inappropriate on the IPv4 loopback interface (see
 (#when-to-send-signal)).
 
-By default, the signal applies only to the request corresponding to the response
-in which it occurs. It does not by itself invalidate other in-flight or future
-requests to the authority. Aware clients MAY prefer IPv6 for subsequent
-connections as described in (#client-requirements); that preference is client
-policy.
+By default, the **HTTP meaning** of the signal applies only to the request
+corresponding to the response in which it occurs. It does not by itself
+invalidate other in-flight or future requests to the authority, and it does not
+redefine HTTP/2 or HTTP/3 multiplexing as connection-scoped failure. Closing or
+abandoning the IPv4 connection so the client can retry over IPv6 is
+**connection management** (see (#connection-lifecycle) and (#http-versions)),
+not a change to that request-scoped meaning: unrelated in-flight streams on the
+same connection MAY complete or be cancelled according to client policy, while
+the client SHOULD avoid starting new work on that IPv4 connection. Aware
+clients MAY prefer IPv6 for subsequent connections as described in
+(#client-requirements); that preference is client policy.
 
 ## Relationship to Retry-After
 
@@ -1137,27 +1143,33 @@ unguessable, short-lived, and loggable without affinity to the issuing server.
 
 This section is informative.
 
-## HTTP Versions
+## HTTP Versions {#http-versions}
 
 No change to the on-the-wire status code or header field definitions is required
-across HTTP versions. Deployment considerations differ mainly in how connections
-are managed:
+across HTTP versions. The signal remains **request-scoped** as in (#using-503).
+What differs by HTTP version is mainly how clients manage the IPv4 connection
+when preparing the IPv6 retry:
 
-* **HTTP/1.1** --- An IPv4-unavailability response typically applies to one request on a single
-  TCP connection. The client closes that IPv4 connection before retrying over
-  IPv6, as described in (#connection-lifecycle).
-* **HTTP/2** --- The signal applies to that TCP connection. A
-  client SHOULD close the IPv4 HTTP/2 connection (affecting all streams on it)
-  before opening an IPv6 connection for the retry. Servers SHOULD emit the signal on
-  every IPv4 HTTP/2 connection that receives a request during an outage, not
-  only on the first stream.
-* **HTTP/3** --- The same semantics apply on a QUIC connection to the authority.
-  HTTP/3 is a separate transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY
-  hold concurrent connections of different HTTP versions and address families.
-  A signal received on an IPv4 QUIC connection does not automatically invalidate
-  an existing IPv6 HTTP/3 connection, but the client MUST still apply
-  (#ipv6-retry) when the logical request attempt that received the signal has not yet
-  succeeded over IPv6.
+* **HTTP/1.1** --- An IPv4-unavailability response typically corresponds to one
+  request on a single TCP connection. The client closes that IPv4 connection
+  before retrying over IPv6, as described in (#connection-lifecycle).
+* **HTTP/2** --- The signal still applies to the logical request on the stream
+  that received it, not to every stream by HTTP semantics. A client SHOULD
+  stop issuing new requests on that IPv4 HTTP/2 connection and SHOULD close or
+  abandon the connection before opening an IPv6 connection for the retry;
+  closing the connection may affect other streams still in flight, which the
+  client MAY allow to drain or MAY cancel per local policy. Servers SHOULD emit
+  the signal on every IPv4 HTTP/2 connection that receives a request during an
+  outage, not only on the first stream, so each logical request that needs an
+  IPv6 retry can observe the header.
+* **HTTP/3** --- The same request-scoped meaning and connection-management
+  guidance apply on a QUIC connection to the authority. HTTP/3 is a separate
+  transport from HTTP/1.1 or HTTP/2 over TCP; a client MAY hold concurrent
+  connections of different HTTP versions and address families. A signal
+  received on an IPv4 QUIC connection does not automatically invalidate an
+  existing IPv6 HTTP/3 connection, but the client MUST still apply
+  (#ipv6-retry) when the logical request attempt that received the signal has
+  not yet succeeded over IPv6.
 
 Clients that discover HTTP/3 via `Alt-Svc` or similar mechanisms on an IPv4
 connection still need to evaluate `Retry-Over-IPv6` before treating the
