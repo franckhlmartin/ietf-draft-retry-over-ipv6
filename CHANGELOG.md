@@ -10,6 +10,10 @@ Formatting-only edits are omitted unless they affect published semantics.
 ## [Unreleased]
 
 - **Build:** document date 2026-11-16 (clear idnits `DOC_DATE_IN_PAST`).
+- **Recovery header (#2):** `Retry-Over-IPv6-Recovery` marks the IPv6 retry
+  attempt (request header sent before the response); success is inferred from
+  the response/status join. Align MUST/SHOULD; fix soft-failure example that
+  treated recovery as a response header.
 
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 
