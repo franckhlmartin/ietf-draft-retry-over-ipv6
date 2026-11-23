@@ -252,6 +252,32 @@ Check access logs for `503` responses that include `Retry-Over-IPv6` and for `Re
 IPv6 requests. Join on token off-box when estimating soft vs hard failures (see
 the draft’s measuring-outage section).
 
+### Dual-stack connect times (`scripts/happy.py`)
+
+HTTP checks above do not explain **which address family Happy Eyeballs picks**
+before any HTTP exchange. For that, use the portable probe
+[`scripts/happy.py`](../scripts/happy.py) (Python 3, stdlib only — no compile
+or install). It reimplements the core measurement metric of
+[vbajpai/happy](https://github.com/vbajpai/happy): staggered concurrent TCP
+`connect()` timing to every A/AAAA. DNS resolution duration is **shown** but
+**not** included in connect timings.
+
+This is a **measurement** tool, not an RFC 8305 / Happy Eyeballs v3 client. After
+timings it prints informative Connection Attempt Delay (CAD) projections
+(default **200 ms** as used by curl, **250 ms** as recommended by RFC 8305).
+
+```bash
+python3 scripts/happy.py -h   # options + short manual with examples
+
+# Compare dual-stack connect times (e.g. issue #8-style diagnosis):
+python3 scripts/happy.py -acs -p 443 ipv6forum.com whynoipv6.com
+```
+
+If IPv6 TCP connect is slower than IPv4 by more than the client’s IPv6
+head-start, Happy Eyeballs may still select IPv4 even when IPv6 works — which
+is when operators and users see `503` + `Retry-Over-IPv6` on a dual-stack path.
+Keep the `curl -4` / `curl -6` checks for the HTTP signal itself.
+
 ## Operational checklist
 
 1. Confirm the host is dual-stack and IPv6 serves the same authority successfully.
