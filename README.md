@@ -20,7 +20,10 @@ GitHub Pages from `main`). Do not commit the generated files.
 
 Planned IPv4 outage drills (plain-language ask, coordinated monthly window, and
 informative server configs) live under [`docs/`](docs/README.md), with one guide
-per server ([NGINX](docs/nginx.md), [Apache](docs/apache.md)).
+per server ([NGINX](docs/nginx.md), [Apache](docs/apache.md)). For dual-stack /
+Happy Eyeballs connect-time diagnosis, see
+[`scripts/happy.py`](scripts/happy.py) (`python3 scripts/happy.py -h`) and the
+Verification section in [`docs/README.md`](docs/README.md).
 
 ## Building
 
