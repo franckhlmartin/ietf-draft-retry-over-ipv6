@@ -20,6 +20,10 @@ Formatting-only edits are omitted unless they affect published semantics.
 - **Client preference (#4):** Keep authority-wide IPv6 preference after the
   signal (drill stickiness); clarify that selective/canary **emission** does
   not limit that preference --- use a separate host or IPv6-ready authority.
+- **Idempotent retry (#5):** `Retry-Over-IPv6: ?1` asserts IPv6 replay is
+  acceptable for that request (RFC 9110 §9.2.2); no client-to-proxy "retry
+  over IPv6" hop; operator dual-stack gateways MAY act as aware clients
+  upstream instead of forwarding a useless signal to IPv4-only clients.
 
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 
