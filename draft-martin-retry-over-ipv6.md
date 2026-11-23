@@ -247,7 +247,10 @@ they appear in all capitals, as shown here.
 
 This document uses terms from [@!RFC9110]. Additional terms:
 
-**Authority**: The host and port derived from the target URI.
+**Authority**: The host and port derived from the target URI (see Section 3.2
+of [@!RFC9110]). In this document, **authority-wide** means applying to later
+requests to that same host and port, not only to the path or URI that returned
+a given response.
 
 **Planned IPv4 outage**: An operator-initiated period during which IPv4 HTTP
 service for an authority is intentionally unavailable while IPv6 service is
@@ -425,9 +428,10 @@ abandoning the IPv4 connection so the client can retry over IPv6 is
 **connection management** (see (#connection-lifecycle) and (#http-versions)),
 not a change to that request-scoped meaning: unrelated in-flight streams on the
 same connection MAY complete or be cancelled according to client policy, while
-the client SHOULD avoid starting new work on that IPv4 connection. Aware
-clients MAY prefer IPv6 for subsequent connections as described in
-(#client-requirements); that preference is client policy.
+the client SHOULD avoid starting new work on that IPv4 connection. Aware clients SHOULD prefer IPv6 for subsequent connections to the **authority**
+as described in (#client-requirements); that sticky preference is intentional
+for planned-outage drills and is broader than the request-scoped HTTP meaning
+of a single response (see (#selective-emission-and-client-preference)).
 
 ## Relationship to Retry-After
 
@@ -939,9 +943,18 @@ database insert. Responding entities and operators SHOULD follow the guidance in
 The client MUST NOT perform more than one IPv4-to-IPv6 retry per logical
 request attempt triggered by `Retry-Over-IPv6`.
 
-After receiving the signal, the client SHOULD prefer IPv6 for subsequent connections
-to the authority until `IPv4-Unavailable-Until` (if present) or for a default
-period (for example, 10 minutes).
+After receiving the signal, the client SHOULD prefer IPv6 for subsequent
+connections to the **authority** until `IPv4-Unavailable-Until` (if present) or
+for a default period (for example, 10 minutes). That preference is
+**authority-wide**: it is not limited to the target URI or path that returned
+the signal. Request-scoped signaling (see (#using-503)) controls which responses
+carry `Retry-Over-IPv6`; once an aware client has observed the signal, sticky
+IPv6 preference for the authority keeps a planned outage from being undone by
+the next navigation landing on IPv4 again.
+
+Clients MAY apply a narrower preference only when local policy requires it (for
+example, a multi-tenant user agent). This document's SHOULD remains
+authority-wide for typical aware clients.
 
 If the IPv6 retry fails with connectivity errors, the client SHOULD apply
 backoff before further attempts and SHOULD NOT fall back to IPv4 while
@@ -1009,6 +1022,38 @@ Operators MAY run staged rollouts: short canary outages (for example, one
 minute), longer windows (hours or a full day aligned with 6/6), and eventually
 permanent IPv6-only service. Operators on the open Internet **SHOULD** follow
 (#intended-deployment) before enabling IPv4-unavailability policy.
+
+### Selective Emission and Client Preference {#selective-emission-and-client-preference}
+
+Enabling the signal per path, method, or traffic slice (see Introduction)
+limits **where the server emits** `503` with `Retry-Over-IPv6: ?1`. It does
+**not** shrink an aware client's sticky IPv6 preference after that client has
+received the signal: per (#client-requirements), preference remains
+authority-wide until `IPv4-Unavailable-Until` (or the default period).
+
+The usual deployment keeps a **single production hostname**. Operators who emit
+the signal only on a canary path (for example `/ipv6-canary`) on that hostname
+**SHOULD** expect aware clients that hit the canary to prefer IPv6 for later
+requests to the rest of the authority as well. That is acceptable when IPv6
+service for the authority is ready; selective emission then only controls which
+IPv4 requests get an explicit signal and body, not whether sticky preference
+stays on one path.
+
+A **separate canary hostname** (a different authority, for example
+`canary.example.com` alongside `www.example.com`) is optional when the operator
+wants client preference from the experiment **not** to spill onto the main site
+--- for example, while IPv6 on production is still unproven and users must keep
+reaching the main hostname over IPv4 via ordinary Happy Eyeballs. This document
+does **not** recommend renaming production to an `ipv4.` dual-name pattern;
+same-authority drills on the real hostname remain the primary model. An
+IPv6-only-reachable alternate URI in the response body ((#response-body)) is a
+separate, human-facing escape hatch and does not redefine the authority for
+machine retry.
+
+HTML-document-only signaling on the public Internet
+((#content-type-and-subresources)) is compatible with authority-wide preference:
+subresources omitted from the signal can still succeed over IPv6 once the client
+prefers that family.
 
 ## Idempotent Methods and Duplicate Processing {#idempotent-methods}
 
