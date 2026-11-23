@@ -17,6 +17,9 @@ Formatting-only edits are omitted unless they affect published semantics.
 - **HTTP scope (#3):** Keep signal request-scoped; treat IPv4 connection close
   on HTTP/2 and HTTP/3 as connection management (drain/cancel other streams per
   client policy), not connection-scoped HTTP invalidation.
+- **Client preference (#4):** Keep authority-wide IPv6 preference after the
+  signal (drill stickiness); clarify that selective/canary **emission** does
+  not limit that preference --- use a separate host or IPv6-ready authority.
 
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 
