@@ -79,6 +79,26 @@ projections for Connection Attempt Delay (CAD) values (default: 200 ms as
 used by curl, 250 ms as recommended by RFC 8305). OS address order may
 differ from browsers.
 
+Machine-readable format (-m)
+----------------------------
+Semicolon-separated fields. Lines starting with '#' are comments (a field
+legend is printed once at the start of -m output).
+
+  RESOLVE.0;timestamp;status;hostname;port;dns_us
+    timestamp  Unix time (seconds since 1970-01-01 UTC) when this run started
+               (same value on every line of one invocation, by design)
+    status     OK or FAIL (name resolution)
+    dns_us     getaddrinfo duration in microseconds (not part of connect time)
+
+  DNS.0;timestamp;status;hostname;address;canonname;reverse
+    (emitted with -a) canonname / reverse may be empty
+
+  HAPPY.0;timestamp;status;hostname;port;address;t1_us;t2_us;...
+    status     OK if at least one sample was attempted; FAIL otherwise
+    tN_us      connect establishment time in microseconds for query N
+               (DNS excluded). Negative value = timeout (-timeout_us).
+               Empty field = hard failure (no timing).
+
 Examples
 --------
   # Human-readable connect times + DNS detail, sorted by average:
@@ -416,6 +436,17 @@ def he_projection(
     )
 
 
+def emit_machine_legend() -> None:
+    """Print -m field descriptions once (comment lines; safe for parsers)."""
+    print("# Machine-readable fields (see also: python3 scripts/happy.py -h)")
+    print("# RESOLVE.0;timestamp;status;hostname;port;dns_us")
+    print("#   timestamp = Unix seconds when this run started (same on all lines)")
+    print("#   dns_us    = getaddrinfo duration in microseconds (not in connect time)")
+    print("# DNS.0;timestamp;status;hostname;address;canonname;reverse  (-a)")
+    print("# HAPPY.0;timestamp;status;hostname;port;address;t1_us;t2_us;...")
+    print("#   tN_us     = connect time in microseconds; negative = timeout")
+
+
 def emit_machine_resolve(
     ts: int, host: str, port: int, dns_us: int | None, ok: bool
 ) -> None:
@@ -551,7 +582,10 @@ def run_target(
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     hosts = load_hosts(args)
+    # One run-start timestamp for all lines (matches vbajpai/happy).
     ts = int(time.time())
+    if args.m:
+        emit_machine_legend()
     rc = 0
     for host in hosts:
         for port in args.ports:
