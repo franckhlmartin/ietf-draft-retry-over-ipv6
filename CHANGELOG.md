@@ -14,6 +14,9 @@ Formatting-only edits are omitted unless they affect published semantics.
   attempt (request header sent before the response); success is inferred from
   the response/status join. Align MUST/SHOULD; fix soft-failure example that
   treated recovery as a response header.
+- **HTTP scope (#3):** Keep signal request-scoped; treat IPv4 connection close
+  on HTTP/2 and HTTP/3 as connection management (drain/cancel other streams per
+  client policy), not connection-scoped HTTP invalidation.
 
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 
