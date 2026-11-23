@@ -271,6 +271,9 @@ python3 scripts/happy.py -h   # options + short manual with examples
 
 # Compare dual-stack connect times (e.g. issue #8-style diagnosis):
 python3 scripts/happy.py -acs -p 443 ipv6forum.com whynoipv6.com
+
+# Also time AF_INET vs AF_INET6 getaddrinfo separately (RESOLVE.4 / RESOLVE.6 with -m):
+python3 scripts/happy.py -acs --dns-detail -p 443 ipv6forum.com
 ```
 
 If IPv6 TCP connect is slower than IPv4 by more than the client’s IPv6

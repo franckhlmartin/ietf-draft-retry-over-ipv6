@@ -14,6 +14,7 @@ Clean-room reimplementation of the metric and CLI shape; not a copy of happy.c.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import errno
 import selectors
 import socket
@@ -88,7 +89,14 @@ legend is printed once at the start of -m output).
     timestamp  Unix time (seconds since 1970-01-01 UTC) when this run started
                (same value on every line of one invocation, by design)
     status     OK or FAIL (name resolution)
-    dns_us     getaddrinfo duration in microseconds (not part of connect time)
+    dns_us     AF_UNSPEC getaddrinfo duration in microseconds
+               (app-visible resolve; not part of connect time)
+
+  RESOLVE.4;timestamp;status;hostname;port;dns_us   (--dns-detail)
+  RESOLVE.6;timestamp;status;hostname;port;dns_us   (--dns-detail)
+    Separate AF_INET / AF_INET6 getaddrinfo timings (run in parallel).
+    Useful when the stub issues A and AAAA as distinct work; still NSS-based
+    (not raw wire DNS / CNAME RTT).
 
   DNS.0;timestamp;status;hostname;address;canonname;reverse
     (emitted with -a) canonname / reverse may be empty
@@ -103,6 +111,9 @@ Examples
 --------
   # Human-readable connect times + DNS detail, sorted by average:
   python3 scripts/happy.py -acs www.ietf.org
+
+  # Split A/AAAA-style resolve timings (RESOLVE.4 / RESOLVE.6 with -m):
+  python3 scripts/happy.py -acs --dns-detail -p 443 ipv6forum.com
 
   # Compare why one host may lose IPv6 under curl HE (~200 ms CAD):
   python3 scripts/happy.py -acs -p 443 ipv6forum.com whynoipv6.com
@@ -195,6 +206,14 @@ See also: docs/README.md (Verification), https://github.com/vbajpai/happy
         ),
     )
     parser.add_argument(
+        "--dns-detail",
+        action="store_true",
+        help=(
+            "also time AF_INET and AF_INET6 getaddrinfo separately (parallel); "
+            "with -m emit RESOLVE.4 and RESOLVE.6"
+        ),
+    )
+    parser.add_argument(
         "hosts",
         nargs="*",
         metavar="hostname",
@@ -246,51 +265,99 @@ def reverse_lookup(addr: str) -> str:
         return ""
 
 
-def resolve_host(
-    host: str, port: int, want_dns_detail: bool
-) -> tuple[list[EndpointResult], int | None, str | None]:
-    """Return endpoints, DNS duration in microseconds, and error message if any."""
-    hints = socket.AI_ADDRCONFIG
+@dataclass
+class FamilyResolve:
+    """Timed getaddrinfo for one address family."""
+
+    family: int
+    dns_us: int
+    ok: bool
+    error: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "6" if self.family == socket.AF_INET6 else "4"
+
+
+@dataclass
+class ResolveResult:
+    endpoints: list[EndpointResult]
+    dns_us: int | None
+    error: str | None
+    family: list[FamilyResolve] = field(default_factory=list)
+
+
+def _getaddrinfo_timed(
+    host: str, port: int, family: int
+) -> tuple[list, int, str | None]:
+    """Return (addrinfo list, elapsed_us, error_or_None)."""
     t0 = now_us()
     try:
         infos = socket.getaddrinfo(
             host,
             port,
+            family=family,
             type=socket.SOCK_STREAM,
             proto=socket.IPPROTO_TCP,
-            flags=hints,
+            flags=socket.AI_ADDRCONFIG,
         )
     except socket.gaierror as exc:
-        dns_us = now_us() - t0
-        return [], dns_us, str(exc)
-    dns_us = now_us() - t0
+        return [], now_us() - t0, str(exc)
+    return infos, now_us() - t0, None
 
-    seen: set[tuple[int, str, int]] = set()
-    endpoints: list[EndpointResult] = []
-    for family, _socktype, _proto, canonname, sockaddr in infos:
-        if family not in (socket.AF_INET, socket.AF_INET6):
-            continue
-        if family == socket.AF_INET:
+
+def resolve_family(host: str, port: int, family: int) -> FamilyResolve:
+    _infos, dns_us, err = _getaddrinfo_timed(host, port, family)
+    return FamilyResolve(
+        family=family,
+        dns_us=dns_us,
+        ok=err is None,
+        error=err,
+    )
+
+
+def resolve_host(
+    host: str,
+    port: int,
+    want_reverse: bool,
+    dns_detail: bool,
+) -> ResolveResult:
+    """AF_UNSPEC resolve for endpoints; optional parallel AF_INET/AF_INET6 timings."""
+    infos, dns_us, err = _getaddrinfo_timed(host, port, socket.AF_UNSPEC)
+    if err is not None:
+        result = ResolveResult(endpoints=[], dns_us=dns_us, error=err)
+    else:
+        seen: set[tuple[int, str, int]] = set()
+        endpoints: list[EndpointResult] = []
+        for family, _socktype, _proto, canonname, sockaddr in infos:
+            if family not in (socket.AF_INET, socket.AF_INET6):
+                continue
             addr = sockaddr[0]
             key = (family, addr, sockaddr[1])
-        else:
-            addr = sockaddr[0]
-            key = (family, addr, sockaddr[1])
-        if key in seen:
-            continue
-        seen.add(key)
-        ep = EndpointResult(
-            host=host,
-            port=port,
-            family=family,
-            addr=addr,
-            sockaddr=sockaddr,
-            canonname=canonname or "",
-        )
-        if want_dns_detail:
-            ep.reverse = reverse_lookup(addr)
-        endpoints.append(ep)
-    return endpoints, dns_us, None
+            if key in seen:
+                continue
+            seen.add(key)
+            ep = EndpointResult(
+                host=host,
+                port=port,
+                family=family,
+                addr=addr,
+                sockaddr=sockaddr,
+                canonname=canonname or "",
+            )
+            if want_reverse:
+                ep.reverse = reverse_lookup(addr)
+            endpoints.append(ep)
+        result = ResolveResult(endpoints=endpoints, dns_us=dns_us, error=None)
+
+    if dns_detail:
+        # Parallel family resolves approximate HE dual-query; still NSS/stub.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            fut4 = pool.submit(resolve_family, host, port, socket.AF_INET)
+            fut6 = pool.submit(resolve_family, host, port, socket.AF_INET6)
+            result.family = [fut4.result(), fut6.result()]
+
+    return result
 
 
 @dataclass
@@ -436,23 +503,38 @@ def he_projection(
     )
 
 
-def emit_machine_legend() -> None:
+def emit_machine_legend(dns_detail: bool) -> None:
     """Print -m field descriptions once (comment lines; safe for parsers)."""
     print("# Machine-readable fields (see also: python3 scripts/happy.py -h)")
     print("# RESOLVE.0;timestamp;status;hostname;port;dns_us")
     print("#   timestamp = Unix seconds when this run started (same on all lines)")
-    print("#   dns_us    = getaddrinfo duration in microseconds (not in connect time)")
+    print("#   dns_us    = AF_UNSPEC getaddrinfo duration in microseconds")
+    if dns_detail:
+        print("# RESOLVE.4;timestamp;status;hostname;port;dns_us  (AF_INET, --dns-detail)")
+        print("# RESOLVE.6;timestamp;status;hostname;port;dns_us  (AF_INET6, --dns-detail)")
     print("# DNS.0;timestamp;status;hostname;address;canonname;reverse  (-a)")
     print("# HAPPY.0;timestamp;status;hostname;port;address;t1_us;t2_us;...")
     print("#   tN_us     = connect time in microseconds; negative = timeout")
 
 
 def emit_machine_resolve(
-    ts: int, host: str, port: int, dns_us: int | None, ok: bool
+    ts: int,
+    host: str,
+    port: int,
+    dns_us: int | None,
+    ok: bool,
+    tag: str = "0",
 ) -> None:
     status = "OK" if ok else "FAIL"
     dns_field = dns_us if dns_us is not None else ""
-    print(f"RESOLVE.0;{ts};{status};{host};{port};{dns_field}")
+    print(f"RESOLVE.{tag};{ts};{status};{host};{port};{dns_field}")
+
+
+def emit_machine_family_resolves(
+    ts: int, host: str, port: int, families: Sequence[FamilyResolve]
+) -> None:
+    for fr in families:
+        emit_machine_resolve(ts, host, port, fr.dns_us, fr.ok, tag=fr.tag)
 
 
 def emit_machine_dns(ts: int, ep: EndpointResult) -> None:
@@ -479,15 +561,31 @@ def emit_machine_happy(ts: int, ep: EndpointResult) -> None:
     print(";".join(parts))
 
 
+def format_family_dns_lines(families: Sequence[FamilyResolve]) -> list[str]:
+    lines: list[str] = []
+    for fr in families:
+        label = "dns_v6" if fr.family == socket.AF_INET6 else "dns_v4"
+        if fr.ok:
+            lines.append(f"  {label} {format_ms(fr.dns_us)} ms")
+        else:
+            lines.append(
+                f"  {label} {format_ms(fr.dns_us)} ms (FAIL: {fr.error})"
+            )
+    return lines
+
+
 def emit_human_dns_block(
     host: str,
     port: int,
     dns_us: int | None,
+    families: Sequence[FamilyResolve],
     endpoints: Sequence[EndpointResult],
 ) -> None:
     print(f"{host}:{port}")
     if dns_us is not None:
         print(f"  dns {format_ms(dns_us)} ms")
+    for line in format_family_dns_lines(families):
+        print(line)
     for ep in endpoints:
         bits = [ep.canonname or host, ">", ep.addr]
         if ep.reverse:
@@ -500,6 +598,7 @@ def emit_human_connect_block(
     host: str,
     port: int,
     dns_us: int | None,
+    families: Sequence[FamilyResolve],
     endpoints: Sequence[EndpointResult],
     sort_results: bool,
     cad_ms_list: Iterable[int],
@@ -507,6 +606,8 @@ def emit_human_connect_block(
     print(f"{host}:{port}")
     if dns_us is not None:
         print(f"  dns {format_ms(dns_us)} ms")
+    for line in format_family_dns_lines(families):
+        print(line)
 
     ordered = list(endpoints)
     if sort_results:
@@ -537,28 +638,45 @@ def run_target(
     ts: int,
 ) -> int:
     """Probe one host:port. Return 0 on success, 1 on resolve/connect issues."""
-    endpoints, dns_us, err = resolve_host(host, port, want_dns_detail=args.a)
-    if err is not None:
+    resolved = resolve_host(
+        host,
+        port,
+        want_reverse=args.a,
+        dns_detail=args.dns_detail,
+    )
+    endpoints = resolved.endpoints
+    dns_us = resolved.dns_us
+    families = resolved.family
+
+    if resolved.error is not None:
         if args.m:
             emit_machine_resolve(ts, host, port, dns_us, ok=False)
+            if args.dns_detail:
+                emit_machine_family_resolves(ts, host, port, families)
         else:
             print(f"{host}:{port}")
-            print(f"  dns {format_ms(dns_us)} ms (FAIL: {err})")
+            print(f"  dns {format_ms(dns_us)} ms (FAIL: {resolved.error})")
+            for line in format_family_dns_lines(families):
+                print(line)
             print()
         return 1
 
     if args.m:
         emit_machine_resolve(ts, host, port, dns_us, ok=True)
+        if args.dns_detail:
+            emit_machine_family_resolves(ts, host, port, families)
         if args.a:
             for ep in endpoints:
                 emit_machine_dns(ts, ep)
     elif args.a:
-        emit_human_dns_block(host, port, dns_us, endpoints)
+        emit_human_dns_block(host, port, dns_us, families, endpoints)
 
     if not endpoints:
         if not args.m and not args.a:
             print(f"{host}:{port}")
             print(f"  dns {format_ms(dns_us)} ms")
+            for line in format_family_dns_lines(families):
+                print(line)
             print("  no addresses")
             print()
         return 1
@@ -569,11 +687,17 @@ def run_target(
             for ep in endpoints:
                 emit_machine_happy(ts, ep)
         else:
-            # When -a already printed a DNS detail block, omit repeating dns_us
-            # on the connect block header unless -a was not used.
+            # When -a already printed a DNS detail block, omit repeating dns lines.
             show_dns = None if args.a else dns_us
+            show_families: Sequence[FamilyResolve] = () if args.a else families
             emit_human_connect_block(
-                host, port, show_dns, endpoints, args.s, args.cad_ms
+                host,
+                port,
+                show_dns,
+                show_families,
+                endpoints,
+                args.s,
+                args.cad_ms,
             )
 
     return 0
@@ -585,7 +709,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # One run-start timestamp for all lines (matches vbajpai/happy).
     ts = int(time.time())
     if args.m:
-        emit_machine_legend()
+        emit_machine_legend(args.dns_detail)
     rc = 0
     for host in hosts:
         for port in args.ports:
