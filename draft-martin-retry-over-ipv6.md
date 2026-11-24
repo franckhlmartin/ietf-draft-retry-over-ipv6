@@ -1182,12 +1182,18 @@ edge). Passing `503` with `Retry-Over-IPv6: ?1` through to those clients does
 not enable an IPv6 retry: the client has no IPv6 path. This document does not
 define a client-to-proxy message asking the gateway to retry. Instead, an
 operator-controlled gateway that understands this specification **MAY** act as
-an aware client toward the next hop: if a response from upstream carries
+an aware client toward the next hop under the **same** conditions as in
+(#client-idempotent-methods): if a response from upstream carries
 `Retry-Over-IPv6: ?1` on an IPv4 upstream connection, the gateway MAY retry the
 same request to the same authority over IPv6 and return the upstream outcome to
-the client, rather than forwarding a signal the client cannot act on. That
-gateway behavior is optional deployment guidance; generic forwarding proxies
-that do not implement this document remain under Section 9.2.2 of [@!RFC9110].
+the client, rather than forwarding a signal the client cannot act on. That is
+not a blanket exception to Section 9.2.2 of [@!RFC9110] for proxies that invent
+retries; it applies only when this signal is present, which asserts that IPv6
+replay of that request is acceptable. Because responding entities **SHOULD NOT**
+emit the signal for non-idempotent methods when duplicate side effects would be
+unacceptable ((#idempotent-methods)), automatic gateway retry of such methods
+**SHOULD be rare** in compliant deployments. Generic forwarding proxies that do
+not implement this document remain under Section 9.2.2 of [@!RFC9110].
 
 ## Split-Stack and Multi-Hop Deployments {#split-stack-deployments}
 

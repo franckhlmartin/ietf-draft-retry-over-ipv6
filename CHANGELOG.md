@@ -23,7 +23,8 @@ Formatting-only edits are omitted unless they affect published semantics.
 - **Idempotent retry (#5):** `Retry-Over-IPv6: ?1` asserts IPv6 replay is
   acceptable for that request (RFC 9110 §9.2.2); no client-to-proxy "retry
   over IPv6" hop; operator dual-stack gateways MAY act as aware clients
-  upstream instead of forwarding a useless signal to IPv4-only clients.
+  upstream under the same rules as UAs; server SHOULD NOT on unsafe
+  non-idempotent methods makes gateway POST retry rare.
 
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 
