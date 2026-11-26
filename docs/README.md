@@ -153,7 +153,7 @@ alone is ambiguous with overload; the header is required for this signal. Do
 | Status | `503 Service Unavailable` |
 | Headers | `Retry-Over-IPv6: ?1` (**mandatory**); optional `IPv4-Unavailable-Until`, `Retry-Over-IPv6-Token` |
 | Cache | Prefer `Cache-Control: private, no-store` |
-| Body | Human-readable and/or Problem Details (`application/problem+json`) with type `urn:ietf:params:problem:ipv4-unavailable` |
+| Body | Human-readable and/or Problem Details (`application/problem+json`) with type `https://iana.org/assignments/http-problem-types#ipv4-unavailable` |
 | Loopback | **MAY** skip signaling for `127.0.0.0/8` (health checks) |
 | Methods | Prefer idempotent methods; avoid `POST` without app-level deduplication |
 | IPv6 path | Do **not** send this signal on IPv6; serve normally |
@@ -178,7 +178,7 @@ Create a Problem Details body the origin can serve from any stack.
 
 ```json
 {
-  "type": "urn:ietf:params:problem:ipv4-unavailable",
+  "type": "https://iana.org/assignments/http-problem-types#ipv4-unavailable",
   "title": "IPv4 Unavailable",
   "status": 503,
   "detail": "IPv4 unavailable until 2026-06-07T00:00:00Z; retry over IPv6.",
