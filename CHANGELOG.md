@@ -9,7 +9,7 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## [Unreleased]
 
-- **Build:** document date 2026-11-16 (clear idnits `DOC_DATE_IN_PAST`).
+- **Build:** document date 2026-11-25 (clear idnits `DOC_DATE_IN_PAST`).
 - **Recovery header (#2):** `Retry-Over-IPv6-Recovery` marks the IPv6 retry
   attempt (request header sent before the response); success is inferred from
   the response/status join. Align MUST/SHOULD; fix soft-failure example that
@@ -25,6 +25,10 @@ Formatting-only edits are omitted unless they affect published semantics.
   over IPv6" hop; operator dual-stack gateways MAY act as aware clients
   upstream under the same rules as UAs; server SHOULD NOT on unsafe
   non-idempotent methods makes gateway POST retry rare.
+- **IANA (#6):** Register `Retry-Over-IPv6` as Structured Fields Item
+  (Boolean); fix Problem Type table to RFC 9457 fields; use
+  `https://iana.org/assignments/http-problem-types#ipv4-unavailable` instead
+  of a `urn:ietf:params:problem:` URI.
 
 ## [draft-martin-retry-over-ipv6-05] - 2026-10-05
 

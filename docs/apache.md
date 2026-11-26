@@ -81,7 +81,7 @@ printf 'Retry-After: %s\r\n' "$RETRY_AFTER"
 printf 'Content-Type: application/problem+json\r\n'
 printf '\r\n'
 cat <<EOF
-{"type":"urn:ietf:params:problem:ipv4-unavailable","title":"IPv4 Unavailable","status":503,"detail":"IPv4 unavailable until ${UNTIL_ISO}; retry over IPv6.","ipv4UnavailableUntil":"${UNTIL_ISO}"}
+{"type":"https://iana.org/assignments/http-problem-types#ipv4-unavailable","title":"IPv4 Unavailable","status":503,"detail":"IPv4 unavailable until ${UNTIL_ISO}; retry over IPv6.","ipv4UnavailableUntil":"${UNTIL_ISO}"}
 EOF
 ```
 
@@ -200,7 +200,7 @@ function handle(r)
     r.headers_out["IPv4-Unavailable-Until"] = until_http
     r.headers_out["Retry-Over-IPv6-Token"] = '"' .. token .. '"'
     r.headers_out["Cache-Control"] = "private, no-store"
-    r:puts('{"type":"urn:ietf:params:problem:ipv4-unavailable","title":"IPv4 Unavailable","status":503,'
+    r:puts('{"type":"https://iana.org/assignments/http-problem-types#ipv4-unavailable","title":"IPv4 Unavailable","status":503,'
         .. '"detail":"IPv4 unavailable until ' .. until_iso .. '.",'
         .. '"retryOverIPv6":true,'
         .. '"ipv4UnavailableUntil":"' .. until_iso .. '"}')

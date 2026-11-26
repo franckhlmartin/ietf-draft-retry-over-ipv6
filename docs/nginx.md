@@ -111,7 +111,7 @@ server {
         add_header Cache-Control "private, no-store" always;
         add_header Retry-After $retry_after_secs always;
         # Body: inline JSON, or alias a file via root + try_files.
-        return 503 '{"type":"urn:ietf:params:problem:ipv4-unavailable","title":"IPv4 Unavailable","status":503,"detail":"IPv4 unavailable until 2026-06-07T00:00:00Z; retry over IPv6.","ipv4UnavailableUntil":"2026-06-07T00:00:00Z"}';
+        return 503 '{"type":"https://iana.org/assignments/http-problem-types#ipv4-unavailable","title":"IPv4 Unavailable","status":503,"detail":"IPv4 unavailable until 2026-06-07T00:00:00Z; retry over IPv6.","ipv4UnavailableUntil":"2026-06-07T00:00:00Z"}';
     }
 
     # --- Normal application (IPv6 and when outage disabled) ----------
@@ -163,7 +163,7 @@ server {
         add_header IPv4-Unavailable-Until $ipv4_until always;
         add_header Retry-Over-IPv6-Token $retry_token always;
         add_header Cache-Control "private, no-store" always;
-        return 503 '{"type":"urn:ietf:params:problem:ipv4-unavailable","title":"IPv4 Unavailable","status":503,"detail":"IPv4 unavailable until 2026-06-07T00:00:00Z; retry over IPv6.","ipv4UnavailableUntil":"2026-06-07T00:00:00Z"}';
+        return 503 '{"type":"https://iana.org/assignments/http-problem-types#ipv4-unavailable","title":"IPv4 Unavailable","status":503,"detail":"IPv4 unavailable until 2026-06-07T00:00:00Z; retry over IPv6.","ipv4UnavailableUntil":"2026-06-07T00:00:00Z"}';
     }
 }
 ```

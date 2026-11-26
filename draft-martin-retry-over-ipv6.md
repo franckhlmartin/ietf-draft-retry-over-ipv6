@@ -7,7 +7,7 @@ workgroup = "HTTP Working Group"
 keyword = ["IPv6", "IPv4", "HTTP", "retry", "dual-stack", "Happy Eyeballs"]
 consensus = true
 
-date = 2026-11-16
+date = 2026-11-25
 
 [seriesInfo]
 name = "Internet-Draft"
@@ -486,13 +486,14 @@ retry the same request over IPv6.
 
 ### Syntax
 
-The field value is a Boolean (see [@!RFC9651]):
+`Retry-Over-IPv6` is a Structured Fields **Item** whose value is a Boolean
+(see [@!RFC9651]):
 
 ~~~ abnf
-Retry-Over-IPv6 = "Retry-Over-IPv6" OWS ":" OWS boolean
-boolean         = "?0" / "?1"
+Retry-Over-IPv6 = sf-boolean
 ~~~
 
+Wire examples in this document use the HTTP field form `Retry-Over-IPv6: ?1`.
 On IPv4-unavailability responses defined by this document, the value **MUST**
 be `?1`. Ordinary `503` responses that indicate overload or maintenance affecting
 all address families MUST NOT include `Retry-Over-IPv6: ?1`.
@@ -885,7 +886,7 @@ URI registered for IPv4 unavailability (see (#iana-considerations)):
 
 ~~~ json
 {
-  "type": "urn:ietf:params:problem:ipv4-unavailable",
+  "type": "https://iana.org/assignments/http-problem-types#ipv4-unavailable",
   "title": "IPv4 Unavailable",
   "status": 503,
   "detail": "IPv4 unavailable until 2026-06-07T00:00:00Z.",
@@ -1338,21 +1339,30 @@ IANA is requested to make the following registrations.
 In the "Hypertext Transfer Protocol (HTTP) Field Name Registry"
 (<https://www.iana.org/assignments/http-fields/>):
 
-Field Name | Status | Struct | Reference
------------|--------|--------|----------
-Retry-Over-IPv6 | permanent | - | This document
-IPv4-Unavailable-Until | permanent | - | This document
+Field Name | Status | Structured Type | Reference
+-----------|--------|-----------------|----------
+Retry-Over-IPv6 | permanent | Item | This document, (#retry-over-ipv6)
+IPv4-Unavailable-Until | permanent | - | This document, (#ipv4-unavailable-until)
 Retry-Over-IPv6-Token | permanent | - | This document
-Retry-Over-IPv6-Recovery | permanent | - | This document
+Retry-Over-IPv6-Recovery | permanent | - | This document, (#retry-over-ipv6-recovery)
+
+`Retry-Over-IPv6` is registered as a Structured Fields Item containing a
+Boolean ([@!RFC9651]). The other fields in this table are not Structured Fields.
 
 ## Problem Type
 
-This document registers the following Problem Details type under the registry
-established by [@!RFC9457]:
+This document registers the following problem type in the "HTTP Problem Types"
+registry established by [@!RFC9457]:
 
-Type URI | Description | Reference
----------|-------------|----------
-`urn:ietf:params:problem:ipv4-unavailable` | Planned IPv4 unavailability; retry over IPv6 when `Retry-Over-IPv6: ?1` is present | This document
+Type URI | Title | Recommended HTTP Status Code | Reference
+---------|-------|------------------------------|----------
+`https://iana.org/assignments/http-problem-types#ipv4-unavailable` | IPv4 Unavailable | 503 | This document, (#response-body)
+
+This Type URI follows the IANA HTTP Problem Types URI convention in
+[@!RFC9457] and does not require a separate `urn:ietf:params:problem:`
+namespace registration. The registered type indicates planned IPv4
+unavailability; aware clients still key retry behavior on
+`Retry-Over-IPv6: ?1`, not on the problem type alone.
 
 This document does **not** register a new HTTP status code.
 
