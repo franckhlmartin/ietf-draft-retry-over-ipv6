@@ -452,7 +452,8 @@ Intermediaries and caches MUST NOT transform an IPv4-unavailability response
 into a successful response. Caching is governed by normal HTTP cache rules
 [@?RFC9111]; operators SHOULD send `Cache-Control: private, no-store` when
 responses are generated dynamically based on the client-facing address family
-(see (#security-considerations)).
+(see (#security-considerations)). How intermediaries relate to IPv6 retry is
+described in (#client-idempotent-methods) and (#cdn-and-reverse-proxy).
 
 A `503` response MUST NOT disallow content. The response MAY include a
 representation and SHOULD include one for human guidance (see (#response-body)).
@@ -931,12 +932,28 @@ retry. The client MUST NOT change the host, scheme, or port solely because of `R
 
 ## Idempotent Methods {#client-idempotent-methods}
 
-Aware clients that receive `503` with `Retry-Over-IPv6: ?1` SHOULD retry the same method, target URI, and body over
-IPv6 (see (#ipv6-retry)). For safe methods [@!RFC9110], such a retry is
-generally acceptable. For non-idempotent methods such as `POST`, the same retry
-can cause duplicate processing --- for example, a duplicate payment, order, or
-database insert. Responding entities and operators SHOULD follow the guidance in
-(#idempotent-methods) on when not to send this signal for such requests.
+Section 9.2.2 of [@!RFC9110] says clients SHOULD NOT automatically replay
+non-idempotent requests unless they know the request is safe to replay, and
+that intermediaries MUST NOT automatically retry non-idempotent requests.
+When a responding entity sends `503` with `Retry-Over-IPv6: ?1`, it
+**asserts for that request** that an address-family retry of the same method,
+target URI, and body over IPv6 is acceptable (including any duplicate-processing
+risk the operator chose to accept or mitigate; see (#idempotent-methods)).
+
+Aware application clients and user agents that receive the signal SHOULD retry
+over IPv6 as in (#ipv6-retry). For safe methods [@!RFC9110], such a retry is
+generally acceptable even without that assertion. For non-idempotent methods
+such as `POST`, the assertion above is what makes automatic IPv6 retry
+consistent with RFC 9110.
+
+This document does **not** define a hop-by-hop signal from an IPv4-only client
+to a proxy asking the proxy to retry over IPv6. An IPv4-only client that receives
+the signal cannot perform the IPv6 retry itself; see (#cdn-and-reverse-proxy)
+when a dual-stack gateway sits in front of such clients. Generic forwarding
+proxies remain subject to Section 9.2.2 of [@!RFC9110] and MUST NOT invent
+automatic retries of non-idempotent requests merely because this header is
+present. Responding entities SHOULD follow (#idempotent-methods) on when not to
+send the signal for non-idempotent methods.
 
 ## Loop Prevention
 
@@ -1057,11 +1074,13 @@ prefers that family.
 
 ## Idempotent Methods and Duplicate Processing {#idempotent-methods}
 
-As described in (#client-idempotent-methods), aware clients SHOULD retry after
-this signal, including for non-idempotent methods --- which can cause duplicate
-processing. Clients cannot generally determine whether a given application or
-resource tolerates duplicate processing. Responding entities MUST NOT assume that
-end-user clients will suppress IPv6 retries for non-idempotent methods.
+As described in (#client-idempotent-methods), sending `Retry-Over-IPv6: ?1`
+asserts that an IPv6 replay of that request is acceptable to the responding
+entity. Aware clients that receive the signal SHOULD retry after it, including
+for non-idempotent methods --- which can cause duplicate processing. Clients
+cannot generally determine whether a given application or resource tolerates
+duplicate processing absent that assertion. Responding entities MUST NOT assume
+that end-user clients will suppress IPv6 retries for non-idempotent methods.
 
 An IPv4-unavailability response does **not** guarantee that the first request had no effect.
 Duplicate risk arises when:
@@ -1143,7 +1162,7 @@ edge metrics alone.
 The responding entity SHOULD log recovery headers but MUST NOT alter the
 response based on them.
 
-## CDN and Reverse Proxy Deployment
+## CDN and Reverse Proxy Deployment {#cdn-and-reverse-proxy}
 
 When an edge terminates client IPv4 and connects to an origin over IPv6, the
 **edge** sends the IPv4-unavailability signal to the client when IPv4 to the edge is disabled --- not
@@ -1156,6 +1175,25 @@ disabling IPv4 on an **internal HTTP gateway** (ingress-to-origin, API gateway,
 or service-mesh ingress) exercises **service-to-service** HTTP that still uses
 operator-controlled hostnames. The same signal semantics apply on each hop where
 IPv4 is intentionally unavailable.
+
+Some deployments place a **dual-stack reverse proxy or address-family gateway**
+in front of IPv4-only clients (for example an enterprise egress proxy or CGNAT
+edge). Passing `503` with `Retry-Over-IPv6: ?1` through to those clients does
+not enable an IPv6 retry: the client has no IPv6 path. This document does not
+define a client-to-proxy message asking the gateway to retry. Instead, an
+operator-controlled gateway that understands this specification **MAY** act as
+an aware client toward the next hop under the **same** conditions as in
+(#client-idempotent-methods): if a response from upstream carries
+`Retry-Over-IPv6: ?1` on an IPv4 upstream connection, the gateway MAY retry the
+same request to the same authority over IPv6 and return the upstream outcome to
+the client, rather than forwarding a signal the client cannot act on. That is
+not a blanket exception to Section 9.2.2 of [@!RFC9110] for proxies that invent
+retries; it applies only when this signal is present, which asserts that IPv6
+replay of that request is acceptable. Because responding entities **SHOULD NOT**
+emit the signal for non-idempotent methods when duplicate side effects would be
+unacceptable ((#idempotent-methods)), automatic gateway retry of such methods
+**SHOULD be rare** in compliant deployments. Generic forwarding proxies that do
+not implement this document remain under Section 9.2.2 of [@!RFC9110].
 
 ## Split-Stack and Multi-Hop Deployments {#split-stack-deployments}
 
